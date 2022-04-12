@@ -101,6 +101,7 @@ public class WebSocket {
         if (bindMessage.getSelfNumber().equals(bindMessage.getTargetNumber())) {
             session.getBasicRemote().sendText(ResponseMessage.error("不能绑定自己").toJson());
             return;
+
         }
 
         // 4. 进行绑定
