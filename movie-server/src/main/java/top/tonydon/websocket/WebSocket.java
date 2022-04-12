@@ -1,14 +1,16 @@
 package top.tonydon.websocket;
 
-import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.tonydon.entity.Message;
+import top.tonydon.message.server.ConnectMessage;
+import top.tonydon.message.JsonMessage;
+import top.tonydon.message.Message;
+import top.tonydon.util.WebSocketGroup;
 
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
 
 // 接受 websocket 请求路径
@@ -20,7 +22,13 @@ public class WebSocket {
 
 
     //保存所有在线socket连接
-    private static Map<String, WebSocket> webSocketMap = new LinkedHashMap<>();
+//    private static Map<String, WebSocket> webSocketMap = new LinkedHashMap<>();
+
+    /**
+     * key：星星号
+     * value：WebSocketGroup
+     */
+    private static final Map<String, WebSocketGroup> map = new HashMap<>();
 
     //记录当前在线数目
     private static int count = 0;
@@ -31,12 +39,16 @@ public class WebSocket {
     // 处理连接建立
     @OnOpen
     public void onOpen(Session session) {
+        // 1. 保存 session，生成星星号
         this.session = session;
-        webSocketMap.put(session.getId(), this);
+        ConnectMessage message = ConnectMessage.success();
 
+        // 2. 存储到 map 中
+        map.put(message.getNumber(), new WebSocketGroup(this, null));
+
+        // 3. 返回连接消息
         try {
-            String json = JSON.toJSONString(new Message(1, "Hello"));
-            session.getBasicRemote().sendText(json);
+            session.getBasicRemote().sendText(message.toJson());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -47,9 +59,12 @@ public class WebSocket {
 
     //接受消息
     @OnMessage
-    public void onMessage(String message, Session session) {
+    public void onMessage(String json, Session session) {
+//        log.info("收到客户端{}消息：{}", session.getId(), message);
+        Message message = JsonMessage.parse(json);
+
+        if(message.getType() == )
         log.info("收到客户端{}消息：{}", session.getId(), message);
-        broadcast(session.getId(), message);
     }
 
     //处理错误
@@ -61,7 +76,7 @@ public class WebSocket {
     //处理连接关闭
     @OnClose
     public void onClose() {
-        webSocketMap.remove(this.session.getId());
+        map.remove(this.session.getId());
         reduceCount();
         log.info("连接关闭:{}", this.session.getId());
     }
@@ -72,44 +87,6 @@ public class WebSocket {
     public void sendMessage(String message) throws IOException {
         this.session.getBasicRemote().sendText(message);
     }
-
-    // 广播消息
-    public static void broadcast() {
-        WebSocket.webSocketMap.forEach((k, v) -> {
-            try {
-                v.sendMessage("这是一条测试广播");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-    /**
-     * 群发消息
-     * @param message 消息内容
-     */
-    public void broadcast(String message){
-        webSocketMap.forEach((k, v) -> {
-            try {
-                v.sendMessage(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
-
-    public void broadcast(String id, String message){
-        webSocketMap.forEach((k, v) -> {
-            try {
-                if(!k.equals(id))
-                    v.sendMessage(message);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
 
     //获取在线连接数目
     public static int getCount() {
