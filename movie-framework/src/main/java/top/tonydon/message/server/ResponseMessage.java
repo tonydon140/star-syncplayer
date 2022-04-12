@@ -19,6 +19,19 @@ public class ResponseMessage extends Message {
      */
     private String msg;
 
+    public ResponseMessage(boolean success, String msg) {
+        this.success = success;
+        this.msg = msg;
+    }
+
+    public static ResponseMessage error(String msg) {
+        return new ResponseMessage(false, msg);
+    }
+
+    public static ResponseMessage success(String msg) {
+        return new ResponseMessage(true, msg);
+    }
+
     @Override
     public int getType() {
         return MessageType.RESPONSE_TYPE;

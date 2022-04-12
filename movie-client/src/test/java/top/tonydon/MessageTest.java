@@ -14,7 +14,5 @@ public class MessageTest {
         System.out.println(message.getType());
 //        System.out.println(MessageEnum.g);
 
-        BindMessage bindMessage = new BindMessage();
-
     }
 }

@@ -1,6 +1,7 @@
 package top.tonydon;
 
 
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -11,6 +12,7 @@ import top.tonydon.client.WebClient;
 import top.tonydon.message.client.BindMessage;
 import top.tonydon.message.server.ConnectMessage;
 import top.tonydon.message.client.MovieMessage;
+import top.tonydon.message.server.ServerBindMessage;
 import top.tonydon.util.ClientObserver;
 
 import java.net.URI;
@@ -23,15 +25,13 @@ public class HelloController {
     public Button button;
     @FXML
     public TextField targetCode;
+    public Label targetNumber;
+    public Label selfNumber;
     @FXML
     private Label welcomeText;
 
     private WebClient client;
 
-    @FXML
-    protected void onHelloButtonClick() {
-        welcomeText.setText("Welcome to JavaFX Application!");
-    }
 
     @FXML
     private void initialize() {
@@ -39,7 +39,7 @@ public class HelloController {
         try {
             client = new WebClient(new URI("ws://localhost:8080/websocket"));
             boolean flag = client.connectBlocking();
-            if(!flag){
+            if (!flag) {
                 welcomeText.setText("连接服务器失败...");
                 return;
             }
@@ -48,12 +48,19 @@ public class HelloController {
             client.addObserver(new ClientObserver() {
                 @Override
                 public void onConnected(ConnectMessage message) {
-                    welcomeText.setText(message.getNumber());
+                    Platform.runLater(() -> selfNumber.setText(message.getNumber()));
                 }
 
                 @Override
                 public void onMovie(MovieMessage message) {
 
+                }
+
+                @Override
+                public void onBind(ServerBindMessage message) {
+                    Platform.runLater(() -> {
+                        targetNumber.setText(message.getTargetNumber());
+                    });
                 }
             });
 

@@ -2,9 +2,14 @@ package top.tonydon.websocket;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import top.tonydon.message.client.BindMessage;
+import top.tonydon.message.client.MovieMessage;
 import top.tonydon.message.server.ConnectMessage;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
+import top.tonydon.message.server.ResponseMessage;
+import top.tonydon.message.server.ServerBindMessage;
+import top.tonydon.util.MessageType;
 import top.tonydon.util.WebSocketGroup;
 
 import javax.websocket.*;
@@ -59,13 +64,68 @@ public class WebSocket {
 
     //接受消息
     @OnMessage
-    public void onMessage(String json, Session session) {
-//        log.info("收到客户端{}消息：{}", session.getId(), message);
+    public void onMessage(String json, Session session) throws IOException {
         Message message = JsonMessage.parse(json);
 
-        if(message.getType() == )
-        log.info("收到客户端{}消息：{}", session.getId(), message);
+        // 1. 绑定消息
+        if (message.getType() == MessageType.BIND_TYPE) doBind(message, session);
+            // 2. 电影消息
+        else if (message.getType() == MessageType.MOVIE_TYPE) doMovie(message);
+
+        log.info("{} --- {}", session.getId(), message);
     }
+
+    /**
+     * 处理绑定消息
+     *
+     * @param message 消息
+     */
+    private void doBind(Message message, Session session) throws IOException {
+        BindMessage bindMessage = (BindMessage) message;
+
+        // 1. 根据星星号获取组
+        WebSocketGroup self = map.get(bindMessage.getSelfNumber());
+        if (self == null) {
+            session.getBasicRemote().sendText(ResponseMessage.error("本机星星号不存在").toJson());
+            return;
+        }
+
+        // 3. 获取她/他的星星号
+        WebSocketGroup target = map.get(bindMessage.getTargetNumber());
+        if (target == null) {
+            session.getBasicRemote().sendText(ResponseMessage.error("远程端星星号不存在").toJson());
+            return;
+        }
+
+        // 4. 不能绑定自己
+        if (bindMessage.getSelfNumber().equals(bindMessage.getTargetNumber())) {
+            session.getBasicRemote().sendText(ResponseMessage.error("不能绑定自己").toJson());
+            return;
+        }
+
+        // 4. 进行绑定
+        self.setTarget(target.getSelf());
+        target.setTarget(self.getSelf());
+
+        // 5. 写回数据
+        session.getBasicRemote()
+                .sendText(new ServerBindMessage(bindMessage.getTargetNumber()).toJson());
+        target.getSelf()
+                .getSession()
+                .getBasicRemote()
+                .sendText(new ServerBindMessage(bindMessage.getSelfNumber()).toJson());
+    }
+
+
+    /**
+     * 处理电影信息
+     *
+     * @param message 消息
+     */
+    private void doMovie(Message message) {
+
+    }
+
 
     //处理错误
     @OnError
@@ -100,5 +160,9 @@ public class WebSocket {
 
     public static synchronized void reduceCount() {
         WebSocket.count--;
+    }
+
+    public Session getSession() {
+        return this.session;
     }
 }

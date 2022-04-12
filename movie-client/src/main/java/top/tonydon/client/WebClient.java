@@ -6,6 +6,7 @@ import org.java_websocket.handshake.ServerHandshake;
 import top.tonydon.message.server.ConnectMessage;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
+import top.tonydon.message.server.ServerBindMessage;
 import top.tonydon.util.ClientObserver;
 import top.tonydon.util.MessageType;
 import top.tonydon.util.Observable;
@@ -47,8 +48,15 @@ public class WebClient extends WebSocketClient implements Observable {
             ConnectMessage connectMessage = (ConnectMessage) message;
             this.number = connectMessage.getNumber();
             // 遍历观察者
-            observerSet.forEach((observer -> observer.onConnected(connectMessage)));
+            observerSet.forEach(observer -> observer.onConnected(connectMessage));
         }
+
+        // 绑定处理
+        else if(message.getType() == MessageType.SERVER_BIND_TYPE){
+            ServerBindMessage serverBindMessage = (ServerBindMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onBind(serverBindMessage));
+        }
+
     }
 
     @Override

@@ -14,8 +14,12 @@
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
     </padding>
 
-    <Label fx:id="welcomeText"/>
-    <TextField fx:id="targetCode"></TextField>
+    <Label>self number</Label>
+    <Label fx:id="selfNumber"/>
+    <Label>target number</Label>
+    <Label fx:id="targetNumber"/>
+
+    <TextField fx:id="targetCode"/>
 
     <Button text="发送消息" onAction="#sendMessage"/>
     <Rectangle/>
