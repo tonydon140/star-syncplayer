@@ -11,20 +11,18 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import lombok.extern.slf4j.Slf4j;
 import top.tonydon.client.WebClient;
-import top.tonydon.message.client.ClientBindMessage;
-import top.tonydon.message.client.ClientUnbindMessage;
-import top.tonydon.message.server.ServerConnectMessage;
-import top.tonydon.message.client.ClientMovieMessage;
-import top.tonydon.message.server.ServerBindMessage;
-import top.tonydon.message.server.ServerOfflineMessage;
-import top.tonydon.message.server.ServerUnbindMessage;
+import top.tonydon.message.client.*;
+import top.tonydon.message.server.*;
+import top.tonydon.util.ActionCode;
 import top.tonydon.util.ClientObserver;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
 
+@Slf4j
 public class HelloController {
 
     @FXML
@@ -60,8 +58,12 @@ public class HelloController {
                 }
 
                 @Override
-                public void onMovie(ClientMovieMessage message) {
-
+                public void onMovie(ServerMovieMessage message) {
+                    if (message.getActionCode() == ActionCode.PLAY){
+                        mediaView.getMediaPlayer().play();
+                    }else if (message.getActionCode() == ActionCode.PAUSE){
+                        mediaView.getMediaPlayer().pause();
+                    }
                 }
 
                 @Override
@@ -101,11 +103,12 @@ public class HelloController {
                     });
                 }
             });
-
         } catch (URISyntaxException | InterruptedException e) {
             e.printStackTrace();
         }
     }
+
+
 
     @FXML
     public void bindButtonAction(ActionEvent actionEvent) {
@@ -172,5 +175,28 @@ public class HelloController {
         Media media = new Media("file:/C:/Users/tangjian/Desktop/华为变奏曲.mp4");
         MediaPlayer mediaPlayer = new MediaPlayer(media);
         mediaView.setMediaPlayer(mediaPlayer);
+    }
+
+    @FXML
+    public void play(ActionEvent actionEvent) {
+        log.info(mediaView.getMediaPlayer().getStatus().toString());
+        mediaView.getMediaPlayer().play();
+    }
+
+    @FXML
+    public void pause(ActionEvent actionEvent) {
+        mediaView.getMediaPlayer().pause();
+    }
+
+    @FXML
+    public void togetherPlay(ActionEvent actionEvent) {
+        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PLAY);
+        client.send(message.toJson());
+    }
+
+    @FXML
+    public void togetherPause(ActionEvent actionEvent) {
+        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PAUSE);
+        client.send(message.toJson());
     }
 }

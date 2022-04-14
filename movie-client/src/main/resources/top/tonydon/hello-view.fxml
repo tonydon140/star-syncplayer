@@ -8,6 +8,7 @@
 <?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.media.MediaView?>
 
+<?import javafx.scene.media.MediaPlayer?>
 <AnchorPane xmlns:fx="http://javafx.com/fxml/1"
             fx:id="root"
             fx:controller="top.tonydon.HelloController">
@@ -21,14 +22,15 @@
                 <ButtonBar buttonOrder="BUTTON_ORDER_WINDOWS">
                     <buttons>
                         <Button onAction="#selectVideo">选择视频</Button>
-                        <Button>播放</Button>
+                        <Button onAction="#play">播放</Button>
+                        <Button onAction="#pause">暂停</Button>
                     </buttons>
                 </ButtonBar>
 
                 <ButtonBar buttonOrder="BUTTON_ORDER_WINDOWS" fx:id="togetherButtonBar" disable="true">
                     <buttons>
-                        <Button>同时播放</Button>
-                        <Button>一起暂停</Button>
+                        <Button onAction="#togetherPlay">同时播放</Button>
+                        <Button onAction="#togetherPause">一起暂停</Button>
                         <Button>从头开始</Button>
                     </buttons>
                 </ButtonBar>

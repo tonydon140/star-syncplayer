@@ -20,6 +20,7 @@ public class MessageType {
     public static final int SERVER_BIND = 103;
     public static final int SERVER_UNBIND = 104;
     public static final int SERVER_OFFLINE = 105;
+    public static final int SERVER_MOVIE = 106;
 
 
     /**************************************************************************
@@ -27,9 +28,9 @@ public class MessageType {
      * 客户端消息
      *
      **************************************************************************/
-    public static final int CLIENT_MOVIE = 201;
-    public static final int CLIENT_BIND = 202;
-    public static final int CLIENT_UNBIND = 203;
+    public static final int CLIENT_BIND = 201;
+    public static final int CLIENT_UNBIND = 202;
+    public static final int CLIENT_MOVIE = 203;
 
 
     /**
@@ -54,9 +55,10 @@ public class MessageType {
         typeMap.put(SERVER_BIND, ServerBindMessage.class);
         typeMap.put(SERVER_UNBIND, ServerUnbindMessage.class);
         typeMap.put(SERVER_OFFLINE, ServerOfflineMessage.class);
+        typeMap.put(SERVER_MOVIE, ServerMovieMessage.class);
 
-        typeMap.put(CLIENT_MOVIE, ClientMovieMessage.class);
         typeMap.put(CLIENT_BIND, ClientBindMessage.class);
         typeMap.put(CLIENT_UNBIND, ClientUnbindMessage.class);
+        typeMap.put(CLIENT_MOVIE, ClientMovieMessage.class);
     }
 }

@@ -3,12 +3,9 @@ package top.tonydon.client;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
-import top.tonydon.message.server.ServerConnectMessage;
+import top.tonydon.message.server.*;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
-import top.tonydon.message.server.ServerBindMessage;
-import top.tonydon.message.server.ServerOfflineMessage;
-import top.tonydon.message.server.ServerUnbindMessage;
 import top.tonydon.util.ClientObserver;
 import top.tonydon.util.MessageType;
 import top.tonydon.util.Observable;
@@ -74,21 +71,26 @@ public class WebClient extends WebSocketClient implements Observable {
         }
 
         // 被解除绑定消息
-        else if (message.getType() == MessageType.SERVER_UNBIND){
+        else if (message.getType() == MessageType.SERVER_UNBIND) {
             ServerUnbindMessage serverUnbindMessage = (ServerUnbindMessage) message;
             observerSet.forEach(clientObserver -> clientObserver.onUnBind(serverUnbindMessage));
         }
 
-        else if (message.getType() == MessageType.SERVER_OFFLINE){
+        // 另一半掉线
+        else if (message.getType() == MessageType.SERVER_OFFLINE) {
             ServerOfflineMessage serverOfflineMessage = (ServerOfflineMessage) message;
             observerSet.forEach(clientObserver -> clientObserver.onOffline(serverOfflineMessage));
         }
 
+        // 电影消息
+        else if (message.getType() == MessageType.SERVER_MOVIE) {
+            ServerMovieMessage serverMovieMessage = (ServerMovieMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onMovie(serverMovieMessage));
+        }
     }
 
     @Override
     public void onClose(int code, String reason, boolean remote) {
-
 
     }
 
@@ -96,15 +98,6 @@ public class WebClient extends WebSocketClient implements Observable {
     public void onError(Exception ex) {
         ex.printStackTrace();
     }
-
-
-
-
-
-
-
-
-
 
 
     public String getSelfNumber() {
