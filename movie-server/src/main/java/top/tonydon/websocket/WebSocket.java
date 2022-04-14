@@ -2,13 +2,11 @@ package top.tonydon.websocket;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.tonydon.message.client.BindMessage;
-import top.tonydon.message.client.MovieMessage;
-import top.tonydon.message.server.ConnectMessage;
+import top.tonydon.message.client.ClientBindMessage;
+import top.tonydon.message.client.ClientUnbindMessage;
+import top.tonydon.message.server.*;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
-import top.tonydon.message.server.ResponseMessage;
-import top.tonydon.message.server.ServerBindMessage;
 import top.tonydon.util.MessageType;
 import top.tonydon.util.WebSocketGroup;
 
@@ -41,25 +39,30 @@ public class WebSocket {
     //当前连接（每个websocket连入都会创建一个MyWebSocket实例
     private Session session;
 
+    private String number;
+
     // 处理连接建立
     @OnOpen
     public void onOpen(Session session) {
-        // 1. 保存 session，生成星星号
-        this.session = session;
-        ConnectMessage message = ConnectMessage.success();
+        // 1. 生成星星号
+        ServerConnectMessage message = ServerConnectMessage.success();
 
-        // 2. 存储到 map 中
+        // 2. 保存 session 和星星号
+        this.session = session;
+        this.number = message.getNumber();
+
+        // 3. 存储到 map 中
         map.put(message.getNumber(), new WebSocketGroup(this, null));
 
-        // 3. 返回连接消息
+        // 4. 返回连接消息
         try {
             session.getBasicRemote().sendText(message.toJson());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        addCount();
-        log.info("新的连接加入：{}", session.getId());
+//        addCount();
+        log.info("新的连接加入：{}", number);
     }
 
     //接受消息
@@ -68,11 +71,28 @@ public class WebSocket {
         Message message = JsonMessage.parse(json);
 
         // 1. 绑定消息
-        if (message.getType() == MessageType.BIND_TYPE) doBind(message, session);
+        if (message.getType() == MessageType.CLIENT_BIND) doBind(message, session);
             // 2. 电影消息
-        else if (message.getType() == MessageType.MOVIE_TYPE) doMovie(message);
+        else if (message.getType() == MessageType.CLIENT_MOVIE) doMovie(message);
+            // 3. 解除绑定
+        else if (message.getType() == MessageType.CLIENT_UNBIND) doUnbind(message, session);
 
         log.info("{} --- {}", session.getId(), message);
+    }
+
+    private void doUnbind(Message message, Session session) throws IOException {
+        ClientUnbindMessage clientUnbindMessage = (ClientUnbindMessage) message;
+
+        // 获取组
+        WebSocketGroup group = map.get(clientUnbindMessage.getSelfNumber());
+
+        // 写回解除绑定数据
+        ServerUnbindMessage unbindMessage = new ServerUnbindMessage();
+        sendMessage(unbindMessage);
+        sendTargetMessage(group.getTarget(), unbindMessage);
+
+        // 删除组中的另一半
+        group.setTarget(null);
     }
 
     /**
@@ -81,27 +101,26 @@ public class WebSocket {
      * @param message 消息
      */
     private void doBind(Message message, Session session) throws IOException {
-        BindMessage bindMessage = (BindMessage) message;
+        ClientBindMessage clientBindMessage = (ClientBindMessage) message;
 
         // 1. 根据星星号获取组
-        WebSocketGroup self = map.get(bindMessage.getSelfNumber());
+        WebSocketGroup self = map.get(clientBindMessage.getSelfNumber());
         if (self == null) {
-            session.getBasicRemote().sendText(ResponseMessage.error("本机星星号不存在").toJson());
+            session.getBasicRemote().sendText(ServerResponseMessage.error("本机星星号不存在").toJson());
             return;
         }
 
         // 3. 获取她/他的星星号
-        WebSocketGroup target = map.get(bindMessage.getTargetNumber());
+        WebSocketGroup target = map.get(clientBindMessage.getTargetNumber());
         if (target == null) {
-            session.getBasicRemote().sendText(ResponseMessage.error("远程端星星号不存在").toJson());
+            session.getBasicRemote().sendText(ServerResponseMessage.error("远程端星星号不存在").toJson());
             return;
         }
 
         // 4. 不能绑定自己
-        if (bindMessage.getSelfNumber().equals(bindMessage.getTargetNumber())) {
-            session.getBasicRemote().sendText(ResponseMessage.error("不能绑定自己").toJson());
+        if (clientBindMessage.getSelfNumber().equals(clientBindMessage.getTargetNumber())) {
+            session.getBasicRemote().sendText(ServerResponseMessage.error("不能绑定自己").toJson());
             return;
-
         }
 
         // 4. 进行绑定
@@ -110,11 +129,11 @@ public class WebSocket {
 
         // 5. 写回数据
         session.getBasicRemote()
-                .sendText(new ServerBindMessage(bindMessage.getTargetNumber()).toJson());
+                .sendText(new ServerBindMessage(clientBindMessage.getTargetNumber()).toJson());
         target.getSelf()
                 .getSession()
                 .getBasicRemote()
-                .sendText(new ServerBindMessage(bindMessage.getSelfNumber()).toJson());
+                .sendText(new ServerBindMessage(clientBindMessage.getSelfNumber()).toJson());
     }
 
 
@@ -137,31 +156,47 @@ public class WebSocket {
     //处理连接关闭
     @OnClose
     public void onClose() {
-        map.remove(this.session.getId());
-        reduceCount();
-        log.info("连接关闭:{}", this.session.getId());
+        // 如果客户端已建立连接，发送断开连接消息
+        WebSocketGroup group = map.get(this.number);
+        if (group.getTarget() != null)
+            sendTargetMessage(group.getTarget(), new ServerOfflineMessage());
+
+        map.remove(this.number);
+        log.info("连接关闭:{}", this.number);
     }
 
-    //群发消息
 
     //发送消息
-    public void sendMessage(String message) throws IOException {
-        this.session.getBasicRemote().sendText(message);
+    public void sendMessage(Message message) {
+        try {
+            this.session.getBasicRemote().sendText(message.toJson());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    //获取在线连接数目
-    public static int getCount() {
-        return count;
+    public void sendTargetMessage(WebSocket webSocket, Message message) {
+        try {
+            webSocket.getSession().getBasicRemote().sendText(message.toJson());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    //操作count，使用synchronized确保线程安全
-    public static synchronized void addCount() {
-        WebSocket.count++;
-    }
 
-    public static synchronized void reduceCount() {
-        WebSocket.count--;
-    }
+//    //获取在线连接数目
+//    public static int getCount() {
+//        return count;
+//    }
+//
+//    //操作count，使用synchronized确保线程安全
+//    public static synchronized void addCount() {
+//        WebSocket.count++;
+//    }
+//
+//    public static synchronized void reduceCount() {
+//        WebSocket.count--;
+//    }
 
     public Session getSession() {
         return this.session;

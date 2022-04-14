@@ -27,6 +27,6 @@ public class ServerBindMessage extends Message {
 
     @Override
     public int getType() {
-        return MessageType.SERVER_BIND_TYPE;
+        return MessageType.SERVER_BIND;
     }
 }

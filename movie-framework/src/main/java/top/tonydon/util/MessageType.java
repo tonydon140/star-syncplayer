@@ -1,24 +1,36 @@
 package top.tonydon.util;
 
 import top.tonydon.message.*;
-import top.tonydon.message.client.BindMessage;
-import top.tonydon.message.client.MovieMessage;
-import top.tonydon.message.server.ConnectMessage;
-import top.tonydon.message.server.ResponseMessage;
-import top.tonydon.message.server.ServerBindMessage;
+import top.tonydon.message.client.*;
+import top.tonydon.message.server.*;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class MessageType {
-    // 客户端消息
-    public static final int MOVIE_TYPE = 201;
-    public static final int BIND_TYPE = 202;
 
-    // 服务端消息
-    public static final int CONNECT_TYPE = 101;
-    public static final int RESPONSE_TYPE = 102;
-    public static final int SERVER_BIND_TYPE = 103;
+
+    /**************************************************************************
+     *
+     * 服务端消息
+     *
+     **************************************************************************/
+    public static final int SERVER_CONNECT = 101;
+    public static final int SERVER_RESPONSE = 102;
+    public static final int SERVER_BIND = 103;
+    public static final int SERVER_UNBIND = 104;
+    public static final int SERVER_OFFLINE = 105;
+
+
+    /**************************************************************************
+     *
+     * 客户端消息
+     *
+     **************************************************************************/
+    public static final int CLIENT_MOVIE = 201;
+    public static final int CLIENT_BIND = 202;
+    public static final int CLIENT_UNBIND = 203;
+
 
     /**
      * 根据类型获取 class 类型
@@ -30,16 +42,21 @@ public class MessageType {
         return typeMap.get(type);
     }
 
+
     /**
      * type 和 Message 的 Map 集合
      */
     private static final Map<Integer, Class<? extends Message>> typeMap = new HashMap<>();
 
     static {
-        typeMap.put(CONNECT_TYPE, ConnectMessage.class);
-        typeMap.put(MOVIE_TYPE, MovieMessage.class);
-        typeMap.put(RESPONSE_TYPE, ResponseMessage.class);
-        typeMap.put(BIND_TYPE, BindMessage.class);
-        typeMap.put(SERVER_BIND_TYPE, ServerBindMessage.class);
+        typeMap.put(SERVER_CONNECT, ServerConnectMessage.class);
+        typeMap.put(SERVER_RESPONSE, ServerResponseMessage.class);
+        typeMap.put(SERVER_BIND, ServerBindMessage.class);
+        typeMap.put(SERVER_UNBIND, ServerUnbindMessage.class);
+        typeMap.put(SERVER_OFFLINE, ServerOfflineMessage.class);
+
+        typeMap.put(CLIENT_MOVIE, ClientMovieMessage.class);
+        typeMap.put(CLIENT_BIND, ClientBindMessage.class);
+        typeMap.put(CLIENT_UNBIND, ClientUnbindMessage.class);
     }
 }

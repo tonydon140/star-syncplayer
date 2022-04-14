@@ -7,7 +7,7 @@ import top.tonydon.util.MessageType;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class ResponseMessage extends Message {
+public class ServerResponseMessage extends Message {
 
     /**
      * 操作是否成功
@@ -19,21 +19,21 @@ public class ResponseMessage extends Message {
      */
     private String msg;
 
-    public ResponseMessage(boolean success, String msg) {
+    public ServerResponseMessage(boolean success, String msg) {
         this.success = success;
         this.msg = msg;
     }
 
-    public static ResponseMessage error(String msg) {
-        return new ResponseMessage(false, msg);
+    public static ServerResponseMessage error(String msg) {
+        return new ServerResponseMessage(false, msg);
     }
 
-    public static ResponseMessage success(String msg) {
-        return new ResponseMessage(true, msg);
+    public static ServerResponseMessage success(String msg) {
+        return new ServerResponseMessage(true, msg);
     }
 
     @Override
     public int getType() {
-        return MessageType.RESPONSE_TYPE;
+        return MessageType.SERVER_RESPONSE;
     }
 }

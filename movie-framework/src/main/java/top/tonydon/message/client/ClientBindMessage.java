@@ -1,17 +1,16 @@
 package top.tonydon.message.client;
 
 
-import lombok.Data;
 import top.tonydon.util.MessageType;
 
 /**
  * 绑定消息，将 selfNumber 和 targetNumber 在服务端绑定起来
  */
-public class BindMessage extends ClientMessage {
+public class ClientBindMessage extends ClientMessage {
 
     private String targetNumber;
 
-    public BindMessage(String selfNumber, String targetNumber) {
+    public ClientBindMessage(String selfNumber, String targetNumber) {
         super(selfNumber);
         this.targetNumber = targetNumber;
 
@@ -27,7 +26,7 @@ public class BindMessage extends ClientMessage {
 
     @Override
     public int getType() {
-        return MessageType.BIND_TYPE;
+        return MessageType.CLIENT_BIND;
     }
 
     @Override

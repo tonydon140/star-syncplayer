@@ -3,10 +3,12 @@ package top.tonydon.client;
 import lombok.extern.slf4j.Slf4j;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
-import top.tonydon.message.server.ConnectMessage;
+import top.tonydon.message.server.ServerConnectMessage;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
 import top.tonydon.message.server.ServerBindMessage;
+import top.tonydon.message.server.ServerOfflineMessage;
+import top.tonydon.message.server.ServerUnbindMessage;
 import top.tonydon.util.ClientObserver;
 import top.tonydon.util.MessageType;
 import top.tonydon.util.Observable;
@@ -20,7 +22,20 @@ import java.util.Set;
 public class WebClient extends WebSocketClient implements Observable {
     private final Set<ClientObserver> observerSet = new HashSet<>();
 
-    private String number;
+    /**
+     * 自己的星星号
+     */
+    private String selfNumber;
+
+    /**
+     * 对方的星星号
+     */
+    private String targetNumber;
+
+    /**
+     * 是否已经和别人绑定
+     */
+    public boolean isBind;
 
     public WebClient(URI serverUri) {
         super(serverUri);
@@ -28,7 +43,7 @@ public class WebClient extends WebSocketClient implements Observable {
 
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-//        log.debug("连接服务器成功！");
+        log.info("连接服务器成功！");
     }
 
     /**
@@ -43,18 +58,30 @@ public class WebClient extends WebSocketClient implements Observable {
         log.info("message = {}", message);
 
         // 2. 对不同的消息执行不同的处理
-        if (message.getType() == MessageType.CONNECT_TYPE) {
+        if (message.getType() == MessageType.SERVER_CONNECT) {
             // 设置星星码
-            ConnectMessage connectMessage = (ConnectMessage) message;
-            this.number = connectMessage.getNumber();
+            ServerConnectMessage serverConnectMessage = (ServerConnectMessage) message;
+            this.selfNumber = serverConnectMessage.getNumber();
             // 遍历观察者
-            observerSet.forEach(observer -> observer.onConnected(connectMessage));
+            observerSet.forEach(observer -> observer.onConnected(serverConnectMessage));
         }
 
         // 绑定处理
-        else if(message.getType() == MessageType.SERVER_BIND_TYPE){
+        else if (message.getType() == MessageType.SERVER_BIND) {
             ServerBindMessage serverBindMessage = (ServerBindMessage) message;
+            this.targetNumber = serverBindMessage.getTargetNumber();
             observerSet.forEach(clientObserver -> clientObserver.onBind(serverBindMessage));
+        }
+
+        // 被解除绑定消息
+        else if (message.getType() == MessageType.SERVER_UNBIND){
+            ServerUnbindMessage serverUnbindMessage = (ServerUnbindMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onUnBind(serverUnbindMessage));
+        }
+
+        else if (message.getType() == MessageType.SERVER_OFFLINE){
+            ServerOfflineMessage serverOfflineMessage = (ServerOfflineMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onOffline(serverOfflineMessage));
         }
 
     }
@@ -62,16 +89,30 @@ public class WebClient extends WebSocketClient implements Observable {
     @Override
     public void onClose(int code, String reason, boolean remote) {
 
+
     }
 
     @Override
     public void onError(Exception ex) {
-
+        ex.printStackTrace();
     }
 
 
-    public String getNumber(){
-        return number;
+
+
+
+
+
+
+
+
+
+    public String getSelfNumber() {
+        return selfNumber;
+    }
+
+    public String getTargetNumber() {
+        return targetNumber;
     }
 
 

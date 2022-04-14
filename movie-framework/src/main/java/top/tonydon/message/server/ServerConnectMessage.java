@@ -12,18 +12,18 @@ import top.tonydon.util.MessageType;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class ConnectMessage extends Message {
+public class ServerConnectMessage extends Message {
 
     private String number;
 
-    public static ConnectMessage success(){
+    public static ServerConnectMessage success(){
         // 随机生成 8 位数字字符串
         String number = RandomUtil.randomNumbers(8).toUpperCase();
-        return new ConnectMessage(number);
+        return new ServerConnectMessage(number);
     }
 
     @Override
     public int getType() {
-        return MessageType.CONNECT_TYPE;
+        return MessageType.SERVER_CONNECT;
     }
 }
