@@ -3,7 +3,7 @@ package top.tonydon.util;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import top.tonydon.websocket.WebSocket;
+import top.tonydon.ws.ServerWebSocket;
 
 /**
  *
@@ -12,6 +12,6 @@ import top.tonydon.websocket.WebSocket;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WebSocketGroup {
-    private WebSocket self;
-    private WebSocket target;
+    private ServerWebSocket self;
+    private ServerWebSocket target;
 }

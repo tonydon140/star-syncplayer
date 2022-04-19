@@ -2,13 +2,14 @@ package top.tonydon;
 
 
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.*;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
@@ -19,6 +20,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import lombok.extern.slf4j.Slf4j;
 import top.tonydon.client.WebClient;
+import top.tonydon.domain.VideoDuration;
 import top.tonydon.message.client.*;
 import top.tonydon.message.server.*;
 import top.tonydon.util.ActionCode;
@@ -27,11 +29,10 @@ import top.tonydon.util.ClientObserver;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Optional;
 
 @Slf4j
-public class HelloController {
+public class ClientController {
 
     @FXML
     public Label selfNumberLabel;
@@ -39,20 +40,25 @@ public class HelloController {
     public Label targetNumberLabel;
     public AnchorPane root;
     public Button bindButton;
-    public ButtonBar togetherButtonBar;
     public MediaView mediaView;
     public Slider videoSlider;
     public Button playOrPauseButton;
+    public Slider volumeSlider;
+    public Label volumeLabel;
+    public VBox togetherVBox;
+    public Label videoDurationLabel;
 
 
     private WebClient client;
     private Stage primaryStage;
     private boolean mouse = false;
-
-
+    private VideoDuration videoDuration;
 
     @FXML
     private void initialize() {
+        // 初始化一些内容
+        videoDuration = new VideoDuration();
+
         // 1. 创建 websocket 客户端
         try {
             client = new WebClient(new URI("ws://localhost:8080/websocket"));
@@ -85,7 +91,7 @@ public class HelloController {
                     // 将客户端设置为已绑定，并更新 ui
                     client.isBind = true;
                     Platform.runLater(() -> {
-                        togetherButtonBar.setDisable(false);
+                        togetherVBox.setDisable(false);
                         targetNumberLabel.setText(message.getTargetNumber());
                         bindButton.setText("解除绑定");
                     });
@@ -96,7 +102,7 @@ public class HelloController {
                     // 解除绑定
                     client.isBind = false;
                     Platform.runLater(() -> {
-                        togetherButtonBar.setDisable(true); // 禁用一起播放按钮组
+                        togetherVBox.setDisable(true); // 禁用一起播放按钮组
                         targetNumberLabel.setText("");      // 清空另一半的星星号
                         bindButton.setText("绑定他/她");     // 重置绑定按钮名称
                     });
@@ -125,20 +131,23 @@ public class HelloController {
         videoSlider.setOnMousePressed(event -> mouse = true);
         videoSlider.setOnMouseReleased(event -> {
             mouse = false;
-            mediaView.getMediaPlayer().seek(Duration.seconds(videoSlider.getValue()));
+            Duration duration = Duration.seconds(videoSlider.getValue());
+            mediaView.getMediaPlayer().seek(duration);
+            videoDuration.setCurrentDuration(duration);
+            videoDurationLabel.setText(videoDuration.toString());
         });
 
-
-//        mediaView.setOnMouseEntered(event -> videoSlider.setVisible(true));
-//        mediaView.setOnMouseExited(event -> videoSlider.setVisible(false));
+        // 3. 音量进度条和 Label 绑定
+        volumeSlider.valueProperty().addListener((observableValue, number, t1) -> {
+            String label = (int) (t1.doubleValue() * 100)  + "%";
+            volumeLabel.setText(label);
+        });
     }
 
     /**
      * 页面加载完毕后执行的初始化操作
      */
     public void initData() {
-        log.debug(root.toString());
-        log.debug(root.getScene().toString());
         // 1. 获取主窗口
         primaryStage = (Stage) root.getScene().getWindow();
 
@@ -151,7 +160,7 @@ public class HelloController {
                 Rectangle2D bounds = screen.getBounds();
                 mediaView.setFitWidth(bounds.getWidth());
                 mediaView.setFitHeight(bounds.getHeight());
-            }else{
+            } else {
                 mediaView.setFitWidth(960);
                 mediaView.setFitHeight(540);
             }
@@ -216,7 +225,6 @@ public class HelloController {
     }
 
 
-
     @FXML
     public void selectVideo(ActionEvent actionEvent) {
         // 创建文件选择器
@@ -227,7 +235,7 @@ public class HelloController {
         File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
 
         // 如果未选择文件，直接返回
-        if(file == null) return;
+        if (file == null) return;
 
         // 如果之前已经选择了视频，则销毁之前的视频
         if (mediaView.getMediaPlayer() != null) mediaView.getMediaPlayer().dispose();
@@ -240,8 +248,8 @@ public class HelloController {
 
         // 3. 媒体加载完毕后
         mediaPlayer.setOnReady(() -> {
-            // 1. 播放按钮解禁
-            playOrPauseButton.setDisable(false);
+            // 1. 按钮解禁
+            enable();
 
             // 2. 设置进度条
             Duration duration = mediaPlayer.getTotalDuration();
@@ -250,11 +258,20 @@ public class HelloController {
             mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
                 if (!mouse) {
                     videoSlider.setValue(newValue.toSeconds());
+                    videoDuration.setCurrentDuration(newValue);
+                    videoDurationLabel.setText(videoDuration.toString());
                 }
             });
 
+            // 绑定音量进度条
+            mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
+
             // 3. 设置视频点击播放/暂停
             mediaView.setOnMouseClicked(event -> playOrPause(new ActionEvent()));
+
+            // 设置进度显示
+            videoDuration.setTotalDuration(duration);
+            videoDurationLabel.setText(videoDuration.toString());
         });
     }
 
@@ -275,8 +292,10 @@ public class HelloController {
     }
 
     @FXML
-    public void fullScreen(ActionEvent actionEvent) {
-        primaryStage.setFullScreen(true);
+    public void fullScreen(MouseEvent mouseEvent) {
+        if(mouseEvent.getButton() == MouseButton.PRIMARY){
+            primaryStage.setFullScreen(true);
+        }
     }
 
     @FXML
@@ -295,5 +314,24 @@ public class HelloController {
     public void togetherStop(ActionEvent actionEvent) {
         ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.STOP);
         client.send(message.toJson());
+    }
+
+
+    /**
+     * 加载视频之后，解禁组件禁用
+     */
+    private void enable() {
+        playOrPauseButton.setDisable(false);
+        videoSlider.setDisable(false);
+        volumeSlider.setDisable(false);
+    }
+
+    /**
+     * 视频销毁之后，禁用组件
+     */
+    private void disable() {
+        playOrPauseButton.setDisable(true);
+        videoSlider.setDisable(true);
+        volumeSlider.setDisable(true);
     }
 }

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.media.MediaView?>
+
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.control.skin.ProgressIndicatorSkin.IndeterminateSpinner.IndicatorPaths?>
+<?import javafx.scene.ImageCursor?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.Cursor?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.text.Font?>
+<AnchorPane fx:id="root"
+            fx:controller="top.tonydon.ClientController"
+            stylesheets="@css/client.css"
+            xmlns:fx="http://javafx.com/fxml/1"
+            xmlns="http://javafx.com/javafx/18">
+    <HBox>
+        <AnchorPane prefWidth="980">
+            <VBox alignment="CENTER" spacing="10">
+                <AnchorPane>
+                    <MediaView fx:id="mediaView" fitHeight="540" fitWidth="960"/>
+                </AnchorPane>
+
+                <VBox>
+                    <Slider fx:id="videoSlider"
+                            disable="true"
+                            layoutY="519.0"
+                            prefHeight="14.0"
+                            prefWidth="960.0"/>
+
+                    <HBox alignment="CENTER" spacing="15">
+                        <Label fx:id="videoDurationLabel">
+                            <HBox.margin>
+                                <Insets right="250"/>
+                            </HBox.margin>
+                            <font>
+                                <Font size="15"/>
+                            </font>
+
+
+                            0:00/0:00
+                        </Label>
+
+                        <Button onAction="#selectVideo">选择视频</Button>
+                        <Button onAction="#playOrPause" fx:id="playOrPauseButton" disable="true">播放</Button>
+
+                        <ImageView>
+                            <Image url="@icon/声音开.png"/>
+                        </ImageView>
+                        <Slider fx:id="volumeSlider" max="1" value="0.8"/>
+                        <Label fx:id="volumeLabel">
+                            80%
+                            <font>
+                                <Font size="15"/>
+                            </font>
+                        </Label>
+
+                        <AnchorPane onMouseClicked="#fullScreen" >
+                            <cursor>
+                                <Cursor fx:constant="HAND"/>
+                            </cursor>
+                            <ImageView >
+                                <Image url="@icon/全屏.png" />
+                            </ImageView>
+                        </AnchorPane>
+                    </HBox>
+                </VBox>
+            </VBox>
+        </AnchorPane>
+
+        <AnchorPane prefWidth="200">
+            <VBox spacing="10">
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Button>复制星星号</Button>
+                    <Label fx:id="selfNumberLabel"/>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Button fx:id="bindButton" onAction="#bindButtonAction">绑定他/她</Button>
+                    <Label fx:id="targetNumberLabel"/>
+                </HBox>
+
+                <VBox fx:id="togetherVBox" disable="true" spacing="15">
+                    <Button onAction="#togetherPlay">同时播放</Button>
+                    <Button onAction="#togetherPause">一起暂停</Button>
+                    <Button onAction="#togetherStop">从头开始</Button>
+                </VBox>
+            </VBox>
+        </AnchorPane>
+    </HBox>
+</AnchorPane>

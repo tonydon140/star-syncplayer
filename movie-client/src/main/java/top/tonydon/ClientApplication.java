@@ -1,7 +1,6 @@
 package top.tonydon;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -9,11 +8,11 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class HelloApplication extends Application {
+public class ClientApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         // 1. 加载 FXML
-        FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("hello-view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("movie-client.fxml"));
         Parent parent = fxmlLoader.load();
 
         // 2. 加载窗口
@@ -24,7 +23,7 @@ public class HelloApplication extends Application {
         stage.setScene(scene);
 
         // 3. 窗口加载完毕后初始化数据
-        HelloController controller = fxmlLoader.getController();
+        ClientController controller = fxmlLoader.getController();
         controller.initData();
 
         // 4. 显示窗口

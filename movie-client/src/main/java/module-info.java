@@ -4,6 +4,7 @@ module top.tonydon {
     requires javafx.controls;
     requires javafx.media;
     requires javafx.fxml;
+    requires javafx.graphics;
 
     requires Java.WebSocket;
     requires org.slf4j;
