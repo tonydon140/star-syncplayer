@@ -1,21 +1,21 @@
 package top.tonydon.message.server;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+
 import top.tonydon.message.Message;
 import top.tonydon.util.MessageType;
 
 /**
  * 服务端绑定客户端消息
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ServerBindMessage extends Message {
     private String targetNumber;
+
+    public ServerBindMessage() {
+    }
+
+    public ServerBindMessage(String targetNumber) {
+        this.targetNumber = targetNumber;
+    }
 
     public String getTargetNumber() {
         return targetNumber;
@@ -28,5 +28,12 @@ public class ServerBindMessage extends Message {
     @Override
     public int getType() {
         return MessageType.SERVER_BIND;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerBindMessage{" +
+                "targetNumber='" + targetNumber + '\'' +
+                "} " + super.toString();
     }
 }

@@ -1,24 +1,23 @@
-package top.tonydon.message.client;
+package top.tonydon.message.server;
 
-import lombok.Data;
+import top.tonydon.message.Message;
 import top.tonydon.util.MessageType;
 
-public class ClientMovieMessage extends ClientMessage{
+public class ServerMovieMessage extends Message {
 
     private int actionCode;
 
-    public ClientMovieMessage(String selfNumber) {
-        super(selfNumber);
+    public ServerMovieMessage() {
     }
 
-    public ClientMovieMessage(String selfNumber, int actionCode) {
-        super(selfNumber);
+    public ServerMovieMessage(int actionCode) {
         this.actionCode = actionCode;
     }
 
+
     @Override
     public int getType() {
-        return MessageType.CLIENT_MOVIE;
+        return MessageType.SERVER_MOVIE;
     }
 
     public int getActionCode() {
@@ -31,7 +30,7 @@ public class ClientMovieMessage extends ClientMessage{
 
     @Override
     public String toString() {
-        return "ClientMovieMessage{" +
+        return "ServerMovieMessage{" +
                 "actionCode=" + actionCode +
                 "} " + super.toString();
     }

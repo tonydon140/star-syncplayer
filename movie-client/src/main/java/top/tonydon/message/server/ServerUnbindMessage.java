@@ -5,8 +5,15 @@ import top.tonydon.util.MessageType;
 
 public class ServerUnbindMessage extends Message {
 
+
+
     @Override
     public int getType() {
         return MessageType.SERVER_UNBIND;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerUnbindMessage{} " + super.toString();
     }
 }

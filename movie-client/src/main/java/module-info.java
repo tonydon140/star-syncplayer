@@ -6,14 +6,14 @@ module top.tonydon {
     requires javafx.fxml;
     requires javafx.graphics;
 
-    requires Java.WebSocket;
-    requires org.slf4j;
-    requires org.controlsfx.controls;
-    requires org.kordamp.bootstrapfx.core;
-    requires lombok;
-    requires movie.framework;
-    requires fastjson;
+    requires com.fasterxml.jackson.databind;
+    requires websocket.client;
+    requires java.logging;
 
     opens top.tonydon to javafx.fxml, javafx.graphics;
+
     exports top.tonydon;
+    exports top.tonydon.message;
+    exports top.tonydon.message.client;
+    exports top.tonydon.message.server;
 }

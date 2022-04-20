@@ -10,10 +10,12 @@ public class ClientBindMessage extends ClientMessage {
 
     private String targetNumber;
 
+    public ClientBindMessage() {
+    }
+
     public ClientBindMessage(String selfNumber, String targetNumber) {
         super(selfNumber);
         this.targetNumber = targetNumber;
-
     }
 
     public String getTargetNumber() {

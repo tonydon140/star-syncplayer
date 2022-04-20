@@ -1,15 +1,21 @@
 package top.tonydon.message.server;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+
 import top.tonydon.message.Message;
 import top.tonydon.util.MessageType;
 
-@EqualsAndHashCode(callSuper = true)
-@Data
+
 public class ServerOfflineMessage extends Message {
+    public ServerOfflineMessage() {
+    }
+
     @Override
     public int getType() {
         return MessageType.SERVER_OFFLINE;
+    }
+
+    @Override
+    public String toString() {
+        return "ServerOfflineMessage{} " + super.toString();
     }
 }

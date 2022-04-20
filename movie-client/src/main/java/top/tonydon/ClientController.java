@@ -18,7 +18,6 @@ import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import lombok.extern.slf4j.Slf4j;
 import top.tonydon.client.WebClient;
 import top.tonydon.domain.VideoDuration;
 import top.tonydon.message.client.*;
@@ -30,9 +29,10 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.logging.Logger;
 
-@Slf4j
 public class ClientController {
+    private final Logger log = Logger.getLogger("ClientController");
 
     @FXML
     public Label selfNumberLabel;
@@ -61,7 +61,7 @@ public class ClientController {
 
         // 1. 创建 websocket 客户端
         try {
-            client = new WebClient(new URI("ws://localhost:8080/websocket"));
+            client = new WebClient(new URI("ws://localhost:1165/websocket"));
             boolean flag = client.connectBlocking();
             if (!flag) {
                 selfNumberLabel.setText("连接服务器失败...");

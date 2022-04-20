@@ -1,7 +1,9 @@
 package top.tonydon.util;
 
-import top.tonydon.message.*;
-import top.tonydon.message.client.*;
+import top.tonydon.message.Message;
+import top.tonydon.message.client.ClientBindMessage;
+import top.tonydon.message.client.ClientMovieMessage;
+import top.tonydon.message.client.ClientUnbindMessage;
 import top.tonydon.message.server.*;
 
 import java.util.HashMap;

@@ -3,7 +3,7 @@ package top.tonydon.util;
 
 import top.tonydon.message.server.*;
 
-public interface ClientObserver extends Observer{
+public interface ClientObserver extends Observer {
     void onConnected(ServerConnectMessage message);
 
     void onMovie(ServerMovieMessage message);
