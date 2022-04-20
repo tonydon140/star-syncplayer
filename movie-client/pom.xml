@@ -52,7 +52,7 @@
         </dependency>
 
         <dependency>
-            <groupId>org.java-websocket</groupId>
+            <groupId>top.tonydon</groupId>
             <artifactId>Java-WebSocket-Module</artifactId>
             <version>1.5.4-SNAPSHOT</version>
         </dependency>

@@ -11,6 +11,7 @@
     <modules>
         <module>movie-client</module>
         <module>movie-server</module>
+        <module>websocket-client</module>
     </modules>
 
     <properties>
