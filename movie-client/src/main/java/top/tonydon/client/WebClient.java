@@ -2,6 +2,8 @@ package top.tonydon.client;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.handshake.ServerHandshake;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
 import top.tonydon.message.server.*;
@@ -12,11 +14,11 @@ import top.tonydon.util.Observable;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Logger;
 
 public class WebClient extends WebSocketClient implements Observable {
+    private final Logger log = LoggerFactory.getLogger(WebClient.class);
     private final Set<ClientObserver> observerSet = new HashSet<>();
-    private final Logger log = Logger.getLogger("WebClient");
+
     /**
      * 自己的星星号
      */
@@ -50,7 +52,7 @@ public class WebClient extends WebSocketClient implements Observable {
     public void onMessage(String json) {
         // 1. 转换 json 到对象
         Message message = JsonMessage.parse(json);
-        log.info("message = " + message);
+        log.info("message = {}", message);
 
         // 2. 对不同的消息执行不同的处理
         if (message.getType() == MessageType.SERVER_CONNECT) {

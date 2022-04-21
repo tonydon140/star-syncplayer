@@ -18,6 +18,8 @@ import javafx.stage.Modality;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
 import top.tonydon.domain.VideoDuration;
 import top.tonydon.message.client.*;
@@ -29,10 +31,10 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
-import java.util.logging.Logger;
 
 public class ClientController {
-    private final Logger log = Logger.getLogger("ClientController");
+
+    private final Logger log = LoggerFactory.getLogger(ClientController.class);
 
     @FXML
     public Label selfNumberLabel;
@@ -65,6 +67,7 @@ public class ClientController {
             boolean flag = client.connectBlocking();
             if (!flag) {
                 selfNumberLabel.setText("连接服务器失败...");
+                log.error("连接服务器失败！");
                 return;
             }
 
@@ -139,7 +142,7 @@ public class ClientController {
 
         // 3. 音量进度条和 Label 绑定
         volumeSlider.valueProperty().addListener((observableValue, number, t1) -> {
-            String label = (int) (t1.doubleValue() * 100)  + "%";
+            String label = (int) (t1.doubleValue() * 100) + "%";
             volumeLabel.setText(label);
         });
     }
@@ -293,7 +296,7 @@ public class ClientController {
 
     @FXML
     public void fullScreen(MouseEvent mouseEvent) {
-        if(mouseEvent.getButton() == MouseButton.PRIMARY){
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
             primaryStage.setFullScreen(true);
         }
     }

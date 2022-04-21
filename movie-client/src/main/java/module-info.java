@@ -9,6 +9,8 @@ module top.tonydon {
     requires com.fasterxml.jackson.databind;
     requires websocket.client;
     requires java.logging;
+    requires org.slf4j;
+    requires ch.qos.logback.classic;
 
     opens top.tonydon to javafx.fxml, javafx.graphics;
 
