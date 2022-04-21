@@ -91,17 +91,17 @@
                 </VBox>
             </VBox>
         </AnchorPane>
-
+<!--        Spinner -->
         <AnchorPane prefWidth="200">
             <VBox spacing="10">
-
+                <Button fx:id="connectServerButton" onAction="#connectServer">连接服务器</Button>
                 <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Button>复制星星号</Button>
+                    <Button fx:id="copyNumberButton" onAction="#copyNumber" disable="true">复制星星号</Button>
                     <Label fx:id="selfNumberLabel"/>
                 </HBox>
 
                 <HBox alignment="CENTER_LEFT" spacing="10">
-                    <Button fx:id="bindButton" onAction="#bindButtonAction">绑定他/她</Button>
+                    <Button fx:id="bindButton" onAction="#bindButtonAction" disable="true">绑定他/她</Button>
                     <Label fx:id="targetNumberLabel"/>
                 </HBox>
 

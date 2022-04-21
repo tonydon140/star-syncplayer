@@ -8,6 +8,8 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -23,6 +25,7 @@ import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
+import top.tonydon.contant.ClientConsts;
 import top.tonydon.domain.VideoDuration;
 import top.tonydon.message.client.*;
 import top.tonydon.message.server.*;
@@ -34,6 +37,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ClientController {
     private final Logger log = LoggerFactory.getLogger(ClientController.class);
@@ -57,6 +62,8 @@ public class ClientController {
     public Label videoDurationLabel;
     public ImageView playOrPauseImageView;
     public AnchorPane playOrPausePane;
+    public Button copyNumberButton;
+    public Button connectServerButton;
 
     /**************************************************************************
      *
@@ -88,74 +95,6 @@ public class ClientController {
         }, "LoadResourceThread");
         loadResourceThread.start();
 
-        // 1. 创建 websocket 客户端
-        try {
-            client = new WebClient(new URI("ws://localhost:1165/websocket"));
-            boolean flag = client.connectBlocking();
-            if (!flag) {
-                selfNumberLabel.setText("连接服务器失败...");
-                log.error("连接服务器失败！");
-                return;
-            }
-
-            // 添加观察者
-            client.addObserver(new ClientObserver() {
-                @Override
-                public void onConnected(ServerConnectMessage message) {
-                    Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
-                }
-
-                @Override
-                public void onMovie(ServerMovieMessage message) {
-                    if (message.getActionCode() == ActionCode.PLAY) {
-                        mediaView.getMediaPlayer().play();
-                    } else if (message.getActionCode() == ActionCode.PAUSE) {
-                        mediaView.getMediaPlayer().pause();
-                    } else if (message.getActionCode() == ActionCode.STOP) {
-                        mediaView.getMediaPlayer().stop();
-                    }
-                }
-
-                @Override
-                public void onBind(ServerBindMessage message) {
-                    // 将客户端设置为已绑定，并更新 ui
-                    client.isBind = true;
-                    Platform.runLater(() -> {
-                        togetherVBox.setDisable(false);
-                        targetNumberLabel.setText(message.getTargetNumber());
-                        bindButton.setText("解除绑定");
-                    });
-                }
-
-                @Override
-                public void onUnBind(ServerUnbindMessage message) {
-                    // 解除绑定
-                    client.isBind = false;
-                    Platform.runLater(() -> {
-                        togetherVBox.setDisable(true); // 禁用一起播放按钮组
-                        targetNumberLabel.setText("");      // 清空另一半的星星号
-                        bindButton.setText("绑定他/她");     // 重置绑定按钮名称
-                    });
-                }
-
-                @Override
-                public void onOffline(ServerOfflineMessage message) {
-                    onUnBind(new ServerUnbindMessage());
-                    Platform.runLater(() -> {
-                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                        alert.setTitle("信息");
-                        alert.setHeaderText("另一半断开连接");
-                        alert.initModality(Modality.WINDOW_MODAL);
-                        alert.initOwner(primaryStage);
-
-                        // 4. 显示窗口
-                        Optional<ButtonType> result = alert.showAndWait();
-                    });
-                }
-            });
-        } catch (URISyntaxException | InterruptedException e) {
-            e.printStackTrace();
-        }
 
         // 2. 进度条的监听事件
         videoSlider.setOnMousePressed(event -> mouse = true);
@@ -312,12 +251,138 @@ public class ClientController {
         client.send(message.toJson());
     }
 
+    // 复制星星号
+    @FXML
+    public void copyNumber(ActionEvent actionEvent) {
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        content.putString(client.getSelfNumber());
+        clipboard.setContent(content);
+    }
+
+    // 连接服务器
+    @FXML
+    public void connectServer(ActionEvent actionEvent) {
+        // 关闭连接
+        if (client != null) {
+            client = null;
+            bindButton.setDisable(true);
+            copyNumberButton.setDisable(true);
+            connectServerButton.setText("连接服务器");
+            return;
+        }
+
+        // 1. 创建对话框
+        TextInputDialog inputDialog = new TextInputDialog();
+        inputDialog.getEditor().setText(ClientConsts.DEFAULT_URL);
+        inputDialog.setTitle("连接服务器");
+        inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConsts.EXAMPLE_URL);
+        inputDialog.setContentText("输入服务器地址：");
+
+        // 2. 设置主窗口
+        inputDialog.initModality(Modality.WINDOW_MODAL);
+        inputDialog.initOwner(primaryStage);
+
+
+        // 3. 显示窗口
+        Optional<String> result = inputDialog.showAndWait();
+
+        // 4. 点击确定后发送消息
+        if (result.isEmpty()) return;
+
+        // 判断地址是否正确
+        String url = result.get();
+        log.info("url = {}", url);
+        if (!url.matches(ClientConsts.URL_REG)) {
+            showAlert("地址格式不正确！", Alert.AlertType.ERROR);
+            return;
+        }
+
+        // 创建 websocket 客户端，连接服务器
+        try {
+            client = new WebClient(new URI(url));
+            boolean flag = client.connectBlocking();
+            if (!flag) {
+                showAlert("服务器连接失败！请重试！", Alert.AlertType.ERROR);
+                log.error("连接服务器失败！");
+                return;
+            }
+            showAlert("服务器连接成功！", Alert.AlertType.INFORMATION);
+
+            // 连接成功之后解禁组件
+            copyNumberButton.setDisable(false);
+            bindButton.setDisable(false);
+            connectServerButton.setText("断开连接");
+
+            // 添加观察者
+            client.addObserver(new ClientObserver() {
+                @Override
+                public void onConnected(ServerConnectMessage message) {
+                    Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
+                }
+
+                @Override
+                public void onMovie(ServerMovieMessage message) {
+                    if (message.getActionCode() == ActionCode.PLAY) {
+                        mediaView.getMediaPlayer().play();
+                    } else if (message.getActionCode() == ActionCode.PAUSE) {
+                        mediaView.getMediaPlayer().pause();
+                    } else if (message.getActionCode() == ActionCode.STOP) {
+                        mediaView.getMediaPlayer().stop();
+                    }
+                }
+
+                @Override
+                public void onBind(ServerBindMessage message) {
+                    // 将客户端设置为已绑定，并更新 ui
+                    client.isBind = true;
+                    Platform.runLater(() -> {
+                        togetherVBox.setDisable(false);
+                        targetNumberLabel.setText(message.getTargetNumber());
+                        bindButton.setText("解除绑定");
+                    });
+                }
+
+                @Override
+                public void onUnBind(ServerUnbindMessage message) {
+                    // 解除绑定
+                    client.isBind = false;
+                    Platform.runLater(() -> {
+                        togetherVBox.setDisable(true); // 禁用一起播放按钮组
+                        targetNumberLabel.setText("");      // 清空另一半的星星号
+                        bindButton.setText("绑定他/她");     // 重置绑定按钮名称
+                    });
+                }
+
+                @Override
+                public void onOffline(ServerOfflineMessage message) {
+                    onUnBind(new ServerUnbindMessage());
+                    showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
+                }
+            });
+        } catch (URISyntaxException | InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     /**************************************************************************
      *
      * 普通成员方法
      *
      **************************************************************************/
+
+    // 显示提示窗口
+    public void showAlert(String headText, Alert.AlertType alertType) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(alertType);
+            alert.setTitle(alertType.toString());
+            alert.setHeaderText(headText);
+            alert.initModality(Modality.WINDOW_MODAL);
+            alert.initOwner(primaryStage);
+            alert.show();
+        });
+    }
 
     public void play(MediaPlayer player) {
         player.play();
@@ -396,4 +461,6 @@ public class ClientController {
             client.send(clientBindMessage.toJson());
         }
     }
+
+
 }
