@@ -1,16 +1,13 @@
 module top.tonydon {
-    requires java.desktop;
-
-    requires javafx.controls;
-    requires javafx.media;
     requires javafx.fxml;
+    requires javafx.media;
+    requires javafx.controls;
     requires javafx.graphics;
 
-    requires com.fasterxml.jackson.databind;
-    requires websocket.client;
-    requires java.logging;
     requires org.slf4j;
+    requires websocket.client;
     requires ch.qos.logback.classic;
+    requires com.fasterxml.jackson.databind;
 
     opens top.tonydon to javafx.fxml, javafx.graphics;
 

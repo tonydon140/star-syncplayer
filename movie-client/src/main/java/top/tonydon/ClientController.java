@@ -6,6 +6,8 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
@@ -30,36 +32,61 @@ import top.tonydon.util.ClientObserver;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 public class ClientController {
-
     private final Logger log = LoggerFactory.getLogger(ClientController.class);
+
+    /**************************************************************************
+     *
+     * FXML组件
+     *
+     **************************************************************************/
 
     @FXML
     public Label selfNumberLabel;
-    @FXML
     public Label targetNumberLabel;
     public AnchorPane root;
     public Button bindButton;
     public MediaView mediaView;
     public Slider videoSlider;
-    public Button playOrPauseButton;
     public Slider volumeSlider;
     public Label volumeLabel;
     public VBox togetherVBox;
     public Label videoDurationLabel;
+    public ImageView playOrPauseImageView;
+    public AnchorPane playOrPausePane;
 
+    /**************************************************************************
+     *
+     * 成员变量
+     *
+     **************************************************************************/
 
     private WebClient client;
     private Stage primaryStage;
     private boolean mouse = false;
     private VideoDuration videoDuration;
 
+    private Image playIcon;
+    private Image pauseIcon;
+
+    /**************************************************************************
+     *
+     * 初始化方法
+     *
+     **************************************************************************/
     @FXML
     private void initialize() {
-        // 初始化一些内容
-        videoDuration = new VideoDuration();
+        // 开启一个线程加载资源初始化一些内容
+        Thread loadResourceThread = new Thread(() -> {
+            videoDuration = new VideoDuration();
+            playIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/播放.png")).toString());
+            pauseIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/暂停.png")).toString());
+            log.info("资源加载完毕！");
+        }, "LoadResourceThread");
+        loadResourceThread.start();
 
         // 1. 创建 websocket 客户端
         try {
@@ -145,14 +172,22 @@ public class ClientController {
             String label = (int) (t1.doubleValue() * 100) + "%";
             volumeLabel.setText(label);
         });
+
+        // 等待线程执行结束
+        try {
+            loadResourceThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
      * 页面加载完毕后执行的初始化操作
      */
     public void initData() {
-        // 1. 获取主窗口
-        primaryStage = (Stage) root.getScene().getWindow();
+        // 初始化变量
+        primaryStage = (Stage) root.getScene().getWindow(); // 获取主窗口
+        playOrPauseImageView.setImage(playIcon);            // 设置播放按钮图标
 
         // 2. 获取主屏幕
         Screen screen = Screen.getPrimary();
@@ -170,11 +205,146 @@ public class ClientController {
         });
     }
 
-
+    /**************************************************************************
+     *
+     * 组件方法
+     *
+     **************************************************************************/
     @FXML
     public void bindButtonAction(ActionEvent actionEvent) {
         if (client.isBind) unbindNumber(actionEvent);
         else bindNumber(actionEvent);
+    }
+
+    @FXML
+    public void selectVideo(ActionEvent actionEvent) {
+        // 创建文件选择器
+        FileChooser fileChooser = new FileChooser();
+        // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("MP4 文件（*.mp4）", "*.mp4");
+        fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
+        File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
+
+        // 如果未选择文件，直接返回
+        if (file == null) return;
+
+        // 如果之前已经选择了视频，则销毁之前的视频
+        if (mediaView.getMediaPlayer() != null) mediaView.getMediaPlayer().dispose();
+
+        // 将文件转为 uri 路径，加载媒体视频
+        String uri = "file:" + file.toPath().toUri().getPath();
+        Media media = new Media(uri);
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        mediaView.setMediaPlayer(mediaPlayer);
+
+        // 3. 媒体加载完毕后
+        mediaPlayer.setOnReady(() -> {
+            // 1. 按钮解禁
+            enable();
+
+            // 2. 设置进度条
+            Duration duration = mediaPlayer.getTotalDuration();
+            videoSlider.setMax(duration.toSeconds());
+            videoSlider.setVisible(true);
+            mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
+                if (!mouse) {
+                    videoSlider.setValue(newValue.toSeconds());
+                    videoDuration.setCurrentDuration(newValue);
+                    videoDurationLabel.setText(videoDuration.toString());
+                }
+            });
+
+            // 绑定音量进度条
+            mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
+
+            // 3. 设置视频点击播放/暂停
+            mediaView.setOnMouseClicked(event -> playOrPause(null));
+
+            // 设置进度显示
+            videoDuration.setTotalDuration(duration);
+            videoDurationLabel.setText(videoDuration.toString());
+        });
+    }
+
+    /**
+     * 播放或者暂停视频
+     *
+     * @param event 点击事件
+     */
+    @FXML
+    public void playOrPause(MouseEvent event) {
+        if (event == null || event.getButton() == MouseButton.PRIMARY) {
+            MediaPlayer player = mediaView.getMediaPlayer();
+            MediaPlayer.Status status = player.getStatus();
+
+            if (status == MediaPlayer.Status.PLAYING) {
+                pause(player);
+            } else if (status == MediaPlayer.Status.STOPPED ||
+                    status == MediaPlayer.Status.PAUSED ||
+                    status == MediaPlayer.Status.READY) {
+                play(player);
+            }
+        }
+    }
+
+    @FXML
+    public void fullScreen(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            primaryStage.setFullScreen(true);
+        }
+    }
+
+    @FXML
+    public void togetherPlay(ActionEvent actionEvent) {
+        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PLAY);
+        client.send(message.toJson());
+    }
+
+    @FXML
+    public void togetherPause(ActionEvent actionEvent) {
+        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PAUSE);
+        client.send(message.toJson());
+    }
+
+    @FXML
+    public void togetherStop(ActionEvent actionEvent) {
+        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.STOP);
+        client.send(message.toJson());
+    }
+
+
+    /**************************************************************************
+     *
+     * 普通成员方法
+     *
+     **************************************************************************/
+
+    public void play(MediaPlayer player) {
+        player.play();
+        playOrPauseImageView.setImage(pauseIcon);
+    }
+
+    public void pause(MediaPlayer player) {
+        player.pause();
+        playOrPauseImageView.setImage(playIcon);
+    }
+
+    // 加载视频之后，解禁组件禁用
+    private void enable() {
+        playOrPausePane.setDisable(false);
+        playOrPausePane.setOpacity(1);
+        videoSlider.setDisable(false);
+        volumeSlider.setDisable(false);
+    }
+
+    /**
+     * 视频销毁之后，禁用组件
+     */
+    private void disable() {
+        playOrPausePane.setDisable(true);
+        playOrPausePane.setOpacity(0.5);
+        videoSlider.setDisable(true);
+        volumeSlider.setDisable(true);
     }
 
     /**
@@ -225,116 +395,5 @@ public class ClientController {
             ClientBindMessage clientBindMessage = new ClientBindMessage(client.getSelfNumber(), result.get());
             client.send(clientBindMessage.toJson());
         }
-    }
-
-
-    @FXML
-    public void selectVideo(ActionEvent actionEvent) {
-        // 创建文件选择器
-        FileChooser fileChooser = new FileChooser();
-        // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("MP4 文件（*.mp4）", "*.mp4");
-        fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
-        File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
-
-        // 如果未选择文件，直接返回
-        if (file == null) return;
-
-        // 如果之前已经选择了视频，则销毁之前的视频
-        if (mediaView.getMediaPlayer() != null) mediaView.getMediaPlayer().dispose();
-
-        // 将文件转为 uri 路径，加载媒体视频
-        String uri = "file:" + file.toPath().toUri().getPath();
-        Media media = new Media(uri);
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        mediaView.setMediaPlayer(mediaPlayer);
-
-        // 3. 媒体加载完毕后
-        mediaPlayer.setOnReady(() -> {
-            // 1. 按钮解禁
-            enable();
-
-            // 2. 设置进度条
-            Duration duration = mediaPlayer.getTotalDuration();
-            videoSlider.setMax(duration.toSeconds());
-            videoSlider.setVisible(true);
-            mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
-                if (!mouse) {
-                    videoSlider.setValue(newValue.toSeconds());
-                    videoDuration.setCurrentDuration(newValue);
-                    videoDurationLabel.setText(videoDuration.toString());
-                }
-            });
-
-            // 绑定音量进度条
-            mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
-
-            // 3. 设置视频点击播放/暂停
-            mediaView.setOnMouseClicked(event -> playOrPause(new ActionEvent()));
-
-            // 设置进度显示
-            videoDuration.setTotalDuration(duration);
-            videoDurationLabel.setText(videoDuration.toString());
-        });
-    }
-
-    @FXML
-    public void playOrPause(ActionEvent actionEvent) {
-        MediaPlayer player = mediaView.getMediaPlayer();
-        MediaPlayer.Status status = player.getStatus();
-
-        if (status == MediaPlayer.Status.PLAYING) {
-            player.pause();
-            playOrPauseButton.setText("播放");
-        } else if (status == MediaPlayer.Status.STOPPED ||
-                status == MediaPlayer.Status.PAUSED ||
-                status == MediaPlayer.Status.READY) {
-            player.play();
-            playOrPauseButton.setText("暂停");
-        }
-    }
-
-    @FXML
-    public void fullScreen(MouseEvent mouseEvent) {
-        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-            primaryStage.setFullScreen(true);
-        }
-    }
-
-    @FXML
-    public void togetherPlay(ActionEvent actionEvent) {
-        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PLAY);
-        client.send(message.toJson());
-    }
-
-    @FXML
-    public void togetherPause(ActionEvent actionEvent) {
-        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PAUSE);
-        client.send(message.toJson());
-    }
-
-    @FXML
-    public void togetherStop(ActionEvent actionEvent) {
-        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.STOP);
-        client.send(message.toJson());
-    }
-
-
-    /**
-     * 加载视频之后，解禁组件禁用
-     */
-    private void enable() {
-        playOrPauseButton.setDisable(false);
-        videoSlider.setDisable(false);
-        volumeSlider.setDisable(false);
-    }
-
-    /**
-     * 视频销毁之后，禁用组件
-     */
-    private void disable() {
-        playOrPauseButton.setDisable(true);
-        videoSlider.setDisable(true);
-        volumeSlider.setDisable(true);
     }
 }

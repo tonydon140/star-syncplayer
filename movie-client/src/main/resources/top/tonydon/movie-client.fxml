@@ -36,41 +36,57 @@
                             prefHeight="14.0"
                             prefWidth="960.0"/>
 
-                    <HBox alignment="CENTER" spacing="15">
-                        <Label fx:id="videoDurationLabel">
-                            <HBox.margin>
-                                <Insets right="250"/>
-                            </HBox.margin>
-                            <font>
-                                <Font size="15"/>
-                            </font>
+                    <HBox>
+                        <HBox alignment="CENTER_LEFT" prefWidth="300" spacing="15">
+                            <!-- 选择视频按钮 -->
+                            <Button onAction="#selectVideo" text="选择视频">
+                                <HBox.margin>
+                                    <Insets left="20"/>
+                                </HBox.margin>
+                            </Button>
+                            <!-- 时间组件 -->
+                            <Label fx:id="videoDurationLabel" text="0:00/0:00">
+                                <font>
+                                    <Font size="15"/>
+                                </font>
+                            </Label>
+                        </HBox>
 
+                        <HBox alignment="CENTER_RIGHT" prefWidth="660" spacing="15">
+                            <!-- 播放/暂停按钮 -->
+                            <AnchorPane fx:id="playOrPausePane" onMouseClicked="#playOrPause" opacity="0.5" disable="true">
+                                <cursor>
+                                    <Cursor fx:constant="HAND"/>
+                                </cursor>
+                                <ImageView fx:id="playOrPauseImageView"/>
+                            </AnchorPane>
+<!--                            <Button onAction="#playOrPause" fx:id="playOrPauseButton" disable="true">播放</Button>-->
 
-                            0:00/0:00
-                        </Label>
-
-                        <Button onAction="#selectVideo">选择视频</Button>
-                        <Button onAction="#playOrPause" fx:id="playOrPauseButton" disable="true">播放</Button>
-
-                        <ImageView>
-                            <Image url="@icon/声音开.png"/>
-                        </ImageView>
-                        <Slider fx:id="volumeSlider" max="1" value="0.8"/>
-                        <Label fx:id="volumeLabel">
-                            80%
-                            <font>
-                                <Font size="15"/>
-                            </font>
-                        </Label>
-
-                        <AnchorPane onMouseClicked="#fullScreen" >
-                            <cursor>
-                                <Cursor fx:constant="HAND"/>
-                            </cursor>
-                            <ImageView >
-                                <Image url="@icon/全屏.png" />
+                            <!-- 声音组件 -->
+                            <ImageView>
+                                <Image url="@icon/声音开.png"/>
                             </ImageView>
-                        </AnchorPane>
+                            <Slider fx:id="volumeSlider" max="1" value="0.8"/>
+                            <Label fx:id="volumeLabel" prefWidth="40" alignment="CENTER_RIGHT">
+                                80%
+                                <font>
+                                    <Font size="15"/>
+                                </font>
+                            </Label>
+
+                            <!-- 全屏按钮 -->
+                            <AnchorPane onMouseClicked="#fullScreen">
+                                <HBox.margin>
+                                    <Insets right="20"/>
+                                </HBox.margin>
+                                <cursor>
+                                    <Cursor fx:constant="HAND"/>
+                                </cursor>
+                                <ImageView>
+                                    <Image url="@icon/全屏.png"/>
+                                </ImageView>
+                            </AnchorPane>
+                        </HBox>
                     </HBox>
                 </VBox>
             </VBox>
