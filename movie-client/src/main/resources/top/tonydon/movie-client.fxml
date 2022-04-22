@@ -1,25 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ButtonBar?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.Slider?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.media.MediaView?>
-
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
-<?import javafx.scene.control.skin.ProgressIndicatorSkin.IndeterminateSpinner.IndicatorPaths?>
-<?import javafx.scene.ImageCursor?>
-<?import javafx.scene.Group?>
 <?import javafx.scene.Cursor?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Font?>
+
 <AnchorPane fx:id="root"
             fx:controller="top.tonydon.ClientController"
-            stylesheets="@css/client.css"
             xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/18">
     <HBox>
@@ -54,13 +49,14 @@
 
                         <HBox alignment="CENTER_RIGHT" prefWidth="660" spacing="15">
                             <!-- 播放/暂停按钮 -->
-                            <AnchorPane fx:id="playOrPausePane" onMouseClicked="#playOrPause" opacity="0.5" disable="true">
+                            <AnchorPane fx:id="playOrPausePane" onMouseClicked="#playOrPause" opacity="0.5"
+                                        disable="true">
                                 <cursor>
                                     <Cursor fx:constant="HAND"/>
                                 </cursor>
                                 <ImageView fx:id="playOrPauseImageView"/>
                             </AnchorPane>
-<!--                            <Button onAction="#playOrPause" fx:id="playOrPauseButton" disable="true">播放</Button>-->
+                            <!--                            <Button onAction="#playOrPause" fx:id="playOrPauseButton" disable="true">播放</Button>-->
 
                             <!-- 声音组件 -->
                             <ImageView>
@@ -91,8 +87,8 @@
                 </VBox>
             </VBox>
         </AnchorPane>
-<!--        Spinner -->
-        <AnchorPane prefWidth="200">
+        <!--        Spinner -->
+        <AnchorPane prefWidth="160">
             <VBox spacing="10">
                 <Button fx:id="connectServerButton" onAction="#connectServer">连接服务器</Button>
                 <HBox alignment="CENTER_LEFT" spacing="10">

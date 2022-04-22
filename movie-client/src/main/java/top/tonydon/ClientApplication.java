@@ -6,6 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import top.tonydon.contant.ClientConsts;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -19,11 +20,12 @@ public class ClientApplication extends Application {
         Parent parent = fxmlLoader.load();
 
         // 2. 加载窗口
-        Scene scene = new Scene(parent, 320, 240);
-        stage.setWidth(1200);
+        Scene scene = new Scene(parent);
+        stage.setWidth(1160);
         stage.setHeight(650);
+        stage.setResizable(false);
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星.png")).toString()));
-        stage.setTitle("星星电影院");
+        stage.setTitle(ClientConsts.TITLE);
         stage.setScene(scene);
 
         // 3. 窗口加载完毕后初始化数据
