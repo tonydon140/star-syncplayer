@@ -4,9 +4,11 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.util.Objects;
 
 
 public class ClientApplication extends Application {
@@ -20,6 +22,7 @@ public class ClientApplication extends Application {
         Scene scene = new Scene(parent, 320, 240);
         stage.setWidth(1200);
         stage.setHeight(650);
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星.png")).toString()));
         stage.setTitle("星星电影院");
         stage.setScene(scene);
 

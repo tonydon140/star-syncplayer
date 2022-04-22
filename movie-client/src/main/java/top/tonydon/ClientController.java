@@ -298,73 +298,87 @@ public class ClientController {
             return;
         }
 
-        // 创建 websocket 客户端，连接服务器
-        try {
-            client = new WebClient(new URI(url));
-            boolean flag = client.connectBlocking();
-            if (!flag) {
-                showAlert("服务器连接失败！请重试！", Alert.AlertType.ERROR);
-                log.error("连接服务器失败！");
-                return;
-            }
-            showAlert("服务器连接成功！", Alert.AlertType.INFORMATION);
-
-            // 连接成功之后解禁组件
-            copyNumberButton.setDisable(false);
-            bindButton.setDisable(false);
-            connectServerButton.setText("断开连接");
-
-            // 添加观察者
-            client.addObserver(new ClientObserver() {
-                @Override
-                public void onConnected(ServerConnectMessage message) {
-                    Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
+        // 开启新的线程连接服务器
+        new Thread(() -> {
+            try {
+                log.info("正在连接服务器...");
+                client = new WebClient(new URI(url));
+                boolean flag = client.connectBlocking();
+                if (!flag) {
+                    showAlert("服务器连接失败！请重试！", Alert.AlertType.ERROR);
+                    log.error("连接服务器失败！");
+                    return;
                 }
+                showAlert("服务器连接成功！", Alert.AlertType.INFORMATION);
 
-                @Override
-                public void onMovie(ServerMovieMessage message) {
-                    if (message.getActionCode() == ActionCode.PLAY) {
-                        mediaView.getMediaPlayer().play();
-                    } else if (message.getActionCode() == ActionCode.PAUSE) {
-                        mediaView.getMediaPlayer().pause();
-                    } else if (message.getActionCode() == ActionCode.STOP) {
-                        mediaView.getMediaPlayer().stop();
+                // 连接成功之后解禁组件
+                copyNumberButton.setDisable(false);
+                bindButton.setDisable(false);
+                Platform.runLater(() -> connectServerButton.setText("断开连接"));
+
+                // 添加观察者
+                client.addObserver(new ClientObserver() {
+                    @Override
+                    public void onConnected(ServerConnectMessage message) {
+                        Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
                     }
-                }
 
-                @Override
-                public void onBind(ServerBindMessage message) {
-                    // 将客户端设置为已绑定，并更新 ui
-                    client.isBind = true;
-                    Platform.runLater(() -> {
-                        togetherVBox.setDisable(false);
-                        targetNumberLabel.setText(message.getTargetNumber());
-                        bindButton.setText("解除绑定");
-                    });
-                }
+                    @Override
+                    public void onMovie(ServerMovieMessage message) {
+                        MediaPlayer player = mediaView.getMediaPlayer();
+                        if (message.getActionCode() == ActionCode.PLAY) {
+                            play(player);
+                        } else if (message.getActionCode() == ActionCode.PAUSE) {
+                            pause(player);
+                        } else if (message.getActionCode() == ActionCode.STOP) {
+                            stop(player);
+                        } else if (message.getActionCode() == ActionCode.PLAY_WITH_CURRENT_TIME) {
+                            player.seek(Duration.seconds(message.getSeconds()));
+                            play(player);
+                        }
+                    }
 
-                @Override
-                public void onUnBind(ServerUnbindMessage message) {
-                    // 解除绑定
-                    client.isBind = false;
-                    Platform.runLater(() -> {
-                        togetherVBox.setDisable(true); // 禁用一起播放按钮组
-                        targetNumberLabel.setText("");      // 清空另一半的星星号
-                        bindButton.setText("绑定他/她");     // 重置绑定按钮名称
-                    });
-                }
+                    @Override
+                    public void onBind(ServerBindMessage message) {
+                        // 将客户端设置为已绑定，并更新 ui
+                        client.isBind = true;
+                        Platform.runLater(() -> {
+                            togetherVBox.setDisable(false);
+                            targetNumberLabel.setText(message.getTargetNumber());
+                            bindButton.setText("解除绑定");
+                        });
+                    }
 
-                @Override
-                public void onOffline(ServerOfflineMessage message) {
-                    onUnBind(new ServerUnbindMessage());
-                    showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
-                }
-            });
-        } catch (URISyntaxException | InterruptedException e) {
-            e.printStackTrace();
-        }
+                    @Override
+                    public void onUnBind(ServerUnbindMessage message) {
+                        // 解除绑定
+                        client.isBind = false;
+                        Platform.runLater(() -> {
+                            togetherVBox.setDisable(true); // 禁用一起播放按钮组
+                            targetNumberLabel.setText("");      // 清空另一半的星星号
+                            bindButton.setText("绑定他/她");     // 重置绑定按钮名称
+                        });
+                    }
+
+                    @Override
+                    public void onOffline(ServerOfflineMessage message) {
+                        onUnBind(new ServerUnbindMessage());
+                        showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
+                    }
+                });
+            } catch (URISyntaxException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }, "ConnectServerThread").start();
     }
 
+    @FXML
+    public void togetherPlayWithCurrentTime(ActionEvent actionEvent) {
+        double seconds = mediaView.getMediaPlayer().getCurrentTime().toSeconds();
+        ClientMovieMessage movieMessage = new ClientMovieMessage(client.getSelfNumber(),
+                ActionCode.PLAY_WITH_CURRENT_TIME, seconds);
+        client.send(movieMessage.toJson());
+    }
 
     /**************************************************************************
      *
@@ -391,6 +405,11 @@ public class ClientController {
 
     public void pause(MediaPlayer player) {
         player.pause();
+        playOrPauseImageView.setImage(playIcon);
+    }
+
+    public void stop(MediaPlayer player) {
+        player.stop();
         playOrPauseImageView.setImage(playIcon);
     }
 

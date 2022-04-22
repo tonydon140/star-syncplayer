@@ -41,8 +41,6 @@ public class ServerWebSocket {
     private String number;
 
 
-
-
     // 处理连接建立
     @OnOpen
     public void onOpen(Session session) {
@@ -166,16 +164,16 @@ public class ServerWebSocket {
      */
     private void doMovie(Message message) {
         // 1. 获取消息组
-        ClientMovieMessage clientMovieMessage = (ClientMovieMessage) message;
-        WebSocketGroup group = map.get(clientMovieMessage.getSelfNumber());
+        ClientMovieMessage clientMessage = (ClientMovieMessage) message;
+        WebSocketGroup group = map.get(clientMessage.getSelfNumber());
 
-        // 2. 创建返回消息
-        int actionCode = clientMovieMessage.getActionCode();
-        ServerMovieMessage playMessage = new ServerMovieMessage(actionCode);
+        // 2. 将 ClientMovieMessage 转为 ServerMovieMessage
+        ServerMovieMessage movieMessage =
+                new ServerMovieMessage(clientMessage.getActionCode(), clientMessage.getSeconds());
 
         // 3. 向双方写回消息
-        sendMessage(playMessage);
-        sendTargetMessage(group.getTarget(), playMessage);
+        sendMessage(movieMessage);
+        sendTargetMessage(group.getTarget(), movieMessage);
     }
 
 

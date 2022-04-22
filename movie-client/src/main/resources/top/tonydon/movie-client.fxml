@@ -109,6 +109,7 @@
                     <Button onAction="#togetherPlay">同时播放</Button>
                     <Button onAction="#togetherPause">一起暂停</Button>
                     <Button onAction="#togetherStop">从头开始</Button>
+                    <Button onAction="#togetherPlayWithCurrentTime">以当前进度同时播放</Button>
                 </VBox>
             </VBox>
         </AnchorPane>
