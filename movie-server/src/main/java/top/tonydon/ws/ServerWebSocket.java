@@ -204,4 +204,7 @@ public class ServerWebSocket {
         return map.size();
     }
 
+    public static Map<String, WebSocketGroup> getMap() {
+        return map;
+    }
 }

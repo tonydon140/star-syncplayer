@@ -14,4 +14,9 @@ public class WebSocketController {
     public ResponseResult getCount(){
         return ResponseResult.success(ServerWebSocket.getCount());
     }
+
+    @RequestMapping("/map")
+    public ResponseResult getMap(){
+        return ResponseResult.success(ServerWebSocket.getMap());
+    }
 }
