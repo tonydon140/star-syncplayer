@@ -671,12 +671,12 @@ public class Base64 {
     if ((options & GZIP) != 0) {
       java.io.ByteArrayOutputStream baos = null;
       java.util.zip.GZIPOutputStream gzos = null;
-      OutputStream b64os = null;
+      Base64.OutputStream b64os = null;
 
       try {
         // GZip -> Base64 -> ByteArray
         baos = new java.io.ByteArrayOutputStream();
-        b64os = new OutputStream(baos, ENCODE | options);
+        b64os = new Base64.OutputStream(baos, ENCODE | options);
         gzos = new java.util.zip.GZIPOutputStream(b64os);
 
         gzos.write(source, off, len);
@@ -872,7 +872,7 @@ public class Base64 {
 
 
   /**
-   * A {@link OutputStream} will write data to another
+   * A {@link Base64.OutputStream} will write data to another
    * <tt>java.io.OutputStream</tt>, given in the constructor,
    * and encode/decode to/from Base64 notation on the fly.
    *
@@ -893,7 +893,7 @@ public class Base64 {
     private byte[] decodabet;  // Local copies to avoid extra method calls
 
     /**
-     * Constructs a {@link OutputStream} in ENCODE mode.
+     * Constructs a {@link Base64.OutputStream} in ENCODE mode.
      *
      * @param out the <tt>java.io.OutputStream</tt> to which data will be written.
      * @since 1.3
@@ -904,7 +904,7 @@ public class Base64 {
 
 
     /**
-     * Constructs a {@link OutputStream} in either ENCODE or DECODE mode.
+     * Constructs a {@link Base64.OutputStream} in either ENCODE or DECODE mode.
      * <p>
      * Valid options:<pre>
      *   ENCODE or DECODE: Encode or Decode as data is read.

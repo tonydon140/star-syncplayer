@@ -25,6 +25,11 @@
 
 package org.java_websocket.drafts;
 
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 import org.java_websocket.WebSocketImpl;
 import org.java_websocket.enums.CloseHandshakeType;
 import org.java_websocket.enums.HandshakeState;
@@ -33,15 +38,21 @@ import org.java_websocket.enums.Role;
 import org.java_websocket.exceptions.IncompleteHandshakeException;
 import org.java_websocket.exceptions.InvalidDataException;
 import org.java_websocket.exceptions.InvalidHandshakeException;
-import org.java_websocket.framing.*;
-import org.java_websocket.handshake.*;
+import org.java_websocket.framing.BinaryFrame;
+import org.java_websocket.framing.CloseFrame;
+import org.java_websocket.framing.ContinuousFrame;
+import org.java_websocket.framing.DataFrame;
+import org.java_websocket.framing.Framedata;
+import org.java_websocket.framing.TextFrame;
+import org.java_websocket.handshake.ClientHandshake;
+import org.java_websocket.handshake.ClientHandshakeBuilder;
+import org.java_websocket.handshake.HandshakeBuilder;
+import org.java_websocket.handshake.HandshakeImpl1Client;
+import org.java_websocket.handshake.HandshakeImpl1Server;
+import org.java_websocket.handshake.Handshakedata;
+import org.java_websocket.handshake.ServerHandshake;
+import org.java_websocket.handshake.ServerHandshakeBuilder;
 import org.java_websocket.util.Charsetfunctions;
-
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
 
 /**
  * Base class for everything of a websocket specification which is not common such as the way the
@@ -161,10 +172,9 @@ public abstract class Draft {
       throw new InvalidHandshakeException(String
           .format("Invalid status line received: %s Status line: %s", firstLineTokens[0], line));
     }
-    HandshakeBuilder handshake = new HandshakeImpl1Server();
-    ServerHandshakeBuilder serverhandshake = (ServerHandshakeBuilder) handshake;
-    serverhandshake.setHttpStatus(Short.parseShort(firstLineTokens[1]));
-    serverhandshake.setHttpStatusMessage(firstLineTokens[2]);
+    ServerHandshakeBuilder handshake = new HandshakeImpl1Server();
+    handshake.setHttpStatus(Short.parseShort(firstLineTokens[1]));
+    handshake.setHttpStatusMessage(firstLineTokens[2]);
     return handshake;
   }
 

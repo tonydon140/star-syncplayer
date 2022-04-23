@@ -13,6 +13,9 @@ import java.util.Objects;
 
 
 public class ClientApplication extends Application {
+
+    private ClientController controller;
+
     @Override
     public void start(Stage stage) throws IOException {
         // 1. 加载 FXML
@@ -29,7 +32,7 @@ public class ClientApplication extends Application {
         stage.setScene(scene);
 
         // 3. 窗口加载完毕后初始化数据
-        ClientController controller = fxmlLoader.getController();
+        controller = fxmlLoader.getController();
         controller.initData();
 
         // 4. 显示窗口
@@ -40,4 +43,11 @@ public class ClientApplication extends Application {
         launch();
     }
 
+    @Override
+    public void stop() throws Exception {
+        super.stop();
+        // 关闭客户端
+        if (controller != null && controller.getClient() != null)
+            controller.getClient().closeBlocking();
+    }
 }

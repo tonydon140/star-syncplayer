@@ -265,6 +265,7 @@ public class ClientController {
     public void connectServer(ActionEvent actionEvent) {
         // 关闭连接
         if (client != null) {
+            client.close();
             client = null;
             bindButton.setDisable(true);
             copyNumberButton.setDisable(true);
@@ -479,6 +480,10 @@ public class ClientController {
             ClientBindMessage clientBindMessage = new ClientBindMessage(client.getSelfNumber(), result.get());
             client.send(clientBindMessage.toJson());
         }
+    }
+
+    public WebClient getClient(){
+        return client;
     }
 
 

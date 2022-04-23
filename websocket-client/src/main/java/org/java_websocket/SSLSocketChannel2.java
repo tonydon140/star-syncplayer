@@ -25,14 +25,6 @@
 
 package org.java_websocket;
 
-import org.java_websocket.interfaces.ISSLChannel;
-
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult.Status;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
@@ -48,7 +40,15 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLEngineResult.HandshakeStatus;
+import javax.net.ssl.SSLEngineResult.Status;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
+import org.java_websocket.interfaces.ISSLChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implements the relevant portions of the SocketChannel interface with the SSLEngine wrapper.
@@ -66,7 +66,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
    *
    * @since 1.4.0
    */
-//  private final Logger log = LoggerFactory.getLogger(SSLSocketChannel2.class);
+  private final Logger log = LoggerFactory.getLogger(SSLSocketChannel2.class);
 
   protected ExecutorService exec;
 
@@ -167,7 +167,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
       }
     }
 
-    if (sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_UNWRAP) {
+    if (sslEngine.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_UNWRAP) {
       if (!isBlocking() || readEngineResult.getStatus() == Status.BUFFER_UNDERFLOW) {
         inCrypt.compact();
         int read = socketChannel.read(inCrypt);
@@ -185,7 +185,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
     }
     consumeDelegatedTasks();
     if (tasks.isEmpty()
-        || sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_WRAP) {
+        || sslEngine.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_WRAP) {
       socketChannel.write(wrap(emptybuffer));
       if (writeEngineResult.getHandshakeStatus() == HandshakeStatus.FINISHED) {
         createBuffers(sslEngine.getSession());
@@ -211,7 +211,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
   private synchronized ByteBuffer unwrap() throws SSLException {
     int rem;
     //There are some ssl test suites, which get around the selector.select() call, which cause an infinite unwrap and 100% cpu usage (see #459 and #458)
-    if (readEngineResult.getStatus() == Status.CLOSED
+    if (readEngineResult.getStatus() == SSLEngineResult.Status.CLOSED
         && sslEngine.getHandshakeStatus() == HandshakeStatus.NOT_HANDSHAKING) {
       try {
         close();
@@ -222,7 +222,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
     do {
       rem = inData.remaining();
       readEngineResult = sslEngine.unwrap(inCrypt, inData);
-    } while (readEngineResult.getStatus() == Status.OK && (rem != inData.remaining()
+    } while (readEngineResult.getStatus() == SSLEngineResult.Status.OK && (rem != inData.remaining()
         || sslEngine.getHandshakeStatus() == HandshakeStatus.NEED_UNWRAP));
     inData.flip();
     return inData;
@@ -256,14 +256,14 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
         inCrypt = ByteBuffer.allocate(netBufferMax);
       }
     }
-//    if (inData.remaining() != 0 && //log.isTraceEnabled()) {
-//      //log.trace(new String(inData.array(), inData.position(), inData.remaining()));
-//    }
+    if (inData.remaining() != 0 && log.isTraceEnabled()) {
+      log.trace(new String(inData.array(), inData.position(), inData.remaining()));
+    }
     inData.rewind();
     inData.flip();
-//    if (inCrypt.remaining() != 0 && //log.isTraceEnabled()) {
-//      //log.trace(new String(inCrypt.array(), inCrypt.position(), inCrypt.remaining()));
-//    }
+    if (inCrypt.remaining() != 0 && log.isTraceEnabled()) {
+      log.trace(new String(inCrypt.array(), inCrypt.position(), inCrypt.remaining()));
+    }
     inCrypt.rewind();
     inCrypt.flip();
     outCrypt.rewind();
@@ -281,7 +281,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
     //   createBuffers(sslEngine.getSession());
     // }
     int num = socketChannel.write(wrap(src));
-    if (writeEngineResult.getStatus() == Status.CLOSED) {
+    if (writeEngineResult.getStatus() == SSLEngineResult.Status.CLOSED) {
       throw new EOFException("Connection is closed");
     }
     return num;
@@ -368,7 +368,7 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
     if (inCrypt.hasRemaining()) {
       unwrap();
       int amount = transfereTo(inData, dst);
-      if (readEngineResult.getStatus() == Status.CLOSED) {
+      if (readEngineResult.getStatus() == SSLEngineResult.Status.CLOSED) {
         return -1;
       }
       if (amount > 0) {
@@ -396,8 +396,8 @@ public class SSLSocketChannel2 implements ByteChannel, WrappedByteChannel, ISSLC
 
   private boolean isHandShakeComplete() {
     HandshakeStatus status = sslEngine.getHandshakeStatus();
-    return status == HandshakeStatus.FINISHED
-        || status == HandshakeStatus.NOT_HANDSHAKING;
+    return status == SSLEngineResult.HandshakeStatus.FINISHED
+        || status == SSLEngineResult.HandshakeStatus.NOT_HANDSHAKING;
   }
 
   public SelectableChannel configureBlocking(boolean b) throws IOException {

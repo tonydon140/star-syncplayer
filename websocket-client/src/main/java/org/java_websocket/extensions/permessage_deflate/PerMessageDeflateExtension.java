@@ -1,13 +1,5 @@
 package org.java_websocket.extensions.permessage_deflate;
 
-import org.java_websocket.enums.Opcode;
-import org.java_websocket.exceptions.InvalidDataException;
-import org.java_websocket.exceptions.InvalidFrameException;
-import org.java_websocket.extensions.CompressionExtension;
-import org.java_websocket.extensions.ExtensionRequestData;
-import org.java_websocket.extensions.IExtension;
-import org.java_websocket.framing.*;
-
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.LinkedHashMap;
@@ -15,6 +7,19 @@ import java.util.Map;
 import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
 import java.util.zip.Inflater;
+import org.java_websocket.enums.Opcode;
+import org.java_websocket.exceptions.InvalidDataException;
+import org.java_websocket.exceptions.InvalidFrameException;
+import org.java_websocket.extensions.CompressionExtension;
+import org.java_websocket.extensions.ExtensionRequestData;
+import org.java_websocket.extensions.IExtension;
+import org.java_websocket.framing.BinaryFrame;
+import org.java_websocket.framing.CloseFrame;
+import org.java_websocket.framing.ContinuousFrame;
+import org.java_websocket.framing.DataFrame;
+import org.java_websocket.framing.Framedata;
+import org.java_websocket.framing.FramedataImpl1;
+import org.java_websocket.framing.TextFrame;
 
 /**
  * PerMessage Deflate Extension (<a href="https://tools.ietf.org/html/rfc7692#section-7">7&#46; The

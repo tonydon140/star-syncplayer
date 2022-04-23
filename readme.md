@@ -4,6 +4,8 @@
 
 #### 如何使用
 
+解压 XingXingMovie.zip 压缩包，在 bin 目录中运行【星星电影院.exe】即可。
+
 客户端的功能：
 
 - 视频播放器。选择本地视频文件进行播放，可控制声音、进度和全屏，后续会添加倍速功能；
@@ -35,7 +37,7 @@ WebSocket 的客户端实现。movie-client 模块中的 WebSocket 客户端使�
 
 Java-Websocket 的项目地址：https://github.com/TooTallNate/Java-WebSocket
 
-但是由于 Java-Websocket 没有引入模块化，而 JavaFX 是模块化应用，所以我下载源码将其打包为模块化，并删除了源码中的非模块化的 Slf4j 依赖（后续会添加模块化的 Slf4j），作为 WebSocket 的客户端来说，并不影响使用。
+但是由于 Java-Websocket 没有引入模块化，而 JavaFX 是模块化应用，所以我下载源码将其打包为模块化，并使用了模块化的 Slf4j。
 
 
 

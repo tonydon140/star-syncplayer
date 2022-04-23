@@ -46,7 +46,7 @@ public abstract class WebSocketAdapter implements WebSocketListener {
   /**
    * This default implementation does not do anything. Go ahead and overwrite it.
    *
-   * @see WebSocketListener#onWebsocketHandshakeReceivedAsServer(WebSocket,
+   * @see org.java_websocket.WebSocketListener#onWebsocketHandshakeReceivedAsServer(WebSocket,
    * Draft, ClientHandshake)
    */
   @Override
@@ -65,7 +65,7 @@ public abstract class WebSocketAdapter implements WebSocketListener {
    * This default implementation does not do anything which will cause the connections to always
    * progress.
    *
-   * @see WebSocketListener#onWebsocketHandshakeSentAsClient(WebSocket,
+   * @see org.java_websocket.WebSocketListener#onWebsocketHandshakeSentAsClient(WebSocket,
    * ClientHandshake)
    */
   @Override
@@ -78,7 +78,7 @@ public abstract class WebSocketAdapter implements WebSocketListener {
    * This default implementation will send a pong in response to the received ping. The pong frame
    * will have the same payload as the ping frame.
    *
-   * @see WebSocketListener#onWebsocketPing(WebSocket, Framedata)
+   * @see org.java_websocket.WebSocketListener#onWebsocketPing(WebSocket, Framedata)
    */
   @Override
   public void onWebsocketPing(WebSocket conn, Framedata f) {
@@ -88,7 +88,7 @@ public abstract class WebSocketAdapter implements WebSocketListener {
   /**
    * This default implementation does not do anything. Go ahead and overwrite it.
    *
-   * @see WebSocketListener#onWebsocketPong(WebSocket, Framedata)
+   * @see org.java_websocket.WebSocketListener#onWebsocketPong(WebSocket, Framedata)
    */
   @Override
   public void onWebsocketPong(WebSocket conn, Framedata f) {
@@ -101,7 +101,7 @@ public abstract class WebSocketAdapter implements WebSocketListener {
    *
    * @param conn The <tt>WebSocket</tt> connection from which the ping frame will be sent.
    * @return PingFrame to be sent.
-   * @see WebSocketListener#onPreparePing(WebSocket)
+   * @see org.java_websocket.WebSocketListener#onPreparePing(WebSocket)
    */
   @Override
   public PingFrame onPreparePing(WebSocket conn) {

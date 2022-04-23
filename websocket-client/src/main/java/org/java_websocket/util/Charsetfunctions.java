@@ -25,14 +25,13 @@
 
 package org.java_websocket.util;
 
-import org.java_websocket.exceptions.InvalidDataException;
-import org.java_websocket.framing.CloseFrame;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import org.java_websocket.exceptions.InvalidDataException;
+import org.java_websocket.framing.CloseFrame;
 
 public class Charsetfunctions {
 

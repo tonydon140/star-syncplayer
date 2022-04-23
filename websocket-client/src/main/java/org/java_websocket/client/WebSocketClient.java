@@ -25,6 +25,32 @@
 
 package org.java_websocket.client;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
+import java.net.Socket;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import org.java_websocket.AbstractWebSocket;
 import org.java_websocket.WebSocket;
 import org.java_websocket.WebSocketImpl;
@@ -39,23 +65,6 @@ import org.java_websocket.handshake.HandshakeImpl1Client;
 import org.java_websocket.handshake.Handshakedata;
 import org.java_websocket.handshake.ServerHandshake;
 import org.java_websocket.protocols.IProtocol;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.net.*;
-import java.nio.ByteBuffer;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A subclass must implement at least <var>onOpen</var>, <var>onClose</var>, and
