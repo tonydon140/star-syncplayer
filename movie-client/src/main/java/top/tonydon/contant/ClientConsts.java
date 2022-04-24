@@ -9,5 +9,5 @@ public class ClientConsts {
 
     public static final String URL_REG = "^ws://[\\S]+";
 
-    public static final String TITLE = "星星电影院 v1.0.1";
+    public static final String TITLE = "星星电影院 v1.1.0";
 }
