@@ -1,18 +1,20 @@
 package top.tonydon.message.client;
 
-import javafx.util.Duration;
 import top.tonydon.util.MessageType;
 
 /**
  * 客户端发送控制电影相关的信息
  * actionCode：动作码
  * duration：当前视频的时间
+ * rate: 当前视频的部分速度
  */
 public class ClientMovieMessage extends ClientMessage {
 
     private int actionCode;
 
     private double seconds;
+
+    private double rate;
 
     public ClientMovieMessage() {
 
@@ -23,10 +25,11 @@ public class ClientMovieMessage extends ClientMessage {
         this.actionCode = actionCode;
     }
 
-    public ClientMovieMessage(String selfNumber, int actionCode, double seconds) {
+    public ClientMovieMessage(String selfNumber, int actionCode, double seconds, double rate) {
         super(selfNumber);
         this.actionCode = actionCode;
         this.seconds = seconds;
+        this.rate = rate;
     }
 
     @Override
@@ -50,11 +53,21 @@ public class ClientMovieMessage extends ClientMessage {
         this.seconds = seconds;
     }
 
+    public double getRate() {
+        return rate;
+    }
+
+    public void setRate(double rate) {
+        this.rate = rate;
+    }
+
+
     @Override
     public String toString() {
         return "ClientMovieMessage{" +
                 "actionCode=" + actionCode +
                 ", seconds=" + seconds +
+                ", rate=" + rate +
                 "} " + super.toString();
     }
 }

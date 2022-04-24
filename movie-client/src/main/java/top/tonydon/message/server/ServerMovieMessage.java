@@ -8,6 +8,7 @@ public class ServerMovieMessage extends Message {
 
     private int actionCode;
     private double seconds;
+    private double rate;
 
     public ServerMovieMessage() {
     }
@@ -16,9 +17,10 @@ public class ServerMovieMessage extends Message {
         this.actionCode = actionCode;
     }
 
-    public ServerMovieMessage(int actionCode, double seconds) {
+    public ServerMovieMessage(int actionCode, double seconds, double rate) {
         this.actionCode = actionCode;
         this.seconds = seconds;
+        this.rate = rate;
     }
 
 
@@ -43,11 +45,20 @@ public class ServerMovieMessage extends Message {
         this.seconds = seconds;
     }
 
+    public double getRate() {
+        return rate;
+    }
+
+    public void setRate(double rate) {
+        this.rate = rate;
+    }
+
     @Override
     public String toString() {
         return "ServerMovieMessage{" +
                 "actionCode=" + actionCode +
                 ", seconds=" + seconds +
+                ", rate=" + rate +
                 "} " + super.toString();
     }
 }

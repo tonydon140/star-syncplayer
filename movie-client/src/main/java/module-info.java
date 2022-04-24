@@ -16,4 +16,5 @@ module top.tonydon {
     exports top.tonydon.message.client;
     exports top.tonydon.message.server;
     exports top.tonydon.client;
+    exports top.tonydon.util;
 }

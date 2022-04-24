@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
 import top.tonydon.contant.ClientConsts;
 import top.tonydon.domain.VideoDuration;
+import top.tonydon.message.Message;
 import top.tonydon.message.client.*;
 import top.tonydon.message.server.*;
 import top.tonydon.util.ActionCode;
@@ -64,6 +65,8 @@ public class ClientController {
     public AnchorPane playOrPausePane;
     public Button copyNumberButton;
     public Button connectServerButton;
+    public ProgressIndicator connectProgress;
+    public Spinner<Number> rateSpinner;
 
     /**************************************************************************
      *
@@ -91,7 +94,7 @@ public class ClientController {
             videoDuration = new VideoDuration();
             playIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/播放.png")).toString());
             pauseIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/暂停.png")).toString());
-            log.info("资源加载完毕！");
+            log.info("应用程序资源加载完毕");
         }, "LoadResourceThread");
         loadResourceThread.start();
 
@@ -123,7 +126,7 @@ public class ClientController {
     /**
      * 页面加载完毕后执行的初始化操作
      */
-    public void initData() {
+    public void init() {
         // 初始化变量
         primaryStage = (Stage) root.getScene().getWindow(); // 获取主窗口
         playOrPauseImageView.setImage(playIcon);            // 设置播放按钮图标
@@ -142,244 +145,9 @@ public class ClientController {
                 mediaView.setFitHeight(540);
             }
         });
+
     }
 
-    /**************************************************************************
-     *
-     * 组件方法
-     *
-     **************************************************************************/
-    @FXML
-    public void bindButtonAction(ActionEvent actionEvent) {
-        if (client.isBind) unbindNumber(actionEvent);
-        else bindNumber(actionEvent);
-    }
-
-    @FXML
-    public void selectVideo(ActionEvent actionEvent) {
-        // 创建文件选择器
-        FileChooser fileChooser = new FileChooser();
-        // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("MP4 文件（*.mp4）", "*.mp4");
-        fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
-        File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
-
-        // 如果未选择文件，直接返回
-        if (file == null) return;
-
-        // 如果之前已经选择了视频，则销毁之前的视频
-        if (mediaView.getMediaPlayer() != null) mediaView.getMediaPlayer().dispose();
-
-        // 将文件转为 uri 路径，加载媒体视频
-        String uri = "file:" + file.toPath().toUri().getPath();
-        Media media = new Media(uri);
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        mediaView.setMediaPlayer(mediaPlayer);
-
-        // 3. 媒体加载完毕后
-        mediaPlayer.setOnReady(() -> {
-            // 1. 按钮解禁
-            enable();
-
-            // 2. 设置进度条
-            Duration duration = mediaPlayer.getTotalDuration();
-            videoSlider.setMax(duration.toSeconds());
-            videoSlider.setVisible(true);
-            mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
-                if (!mouse) {
-                    videoSlider.setValue(newValue.toSeconds());
-                    videoDuration.setCurrentDuration(newValue);
-                    videoDurationLabel.setText(videoDuration.toString());
-                }
-            });
-
-            // 绑定音量进度条
-            mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
-
-            // 3. 设置视频点击播放/暂停
-            mediaView.setOnMouseClicked(event -> playOrPause(null));
-
-            // 设置进度显示
-            videoDuration.setTotalDuration(duration);
-            videoDurationLabel.setText(videoDuration.toString());
-        });
-    }
-
-    /**
-     * 播放或者暂停视频
-     *
-     * @param event 点击事件
-     */
-    @FXML
-    public void playOrPause(MouseEvent event) {
-        if (event == null || event.getButton() == MouseButton.PRIMARY) {
-            MediaPlayer player = mediaView.getMediaPlayer();
-            MediaPlayer.Status status = player.getStatus();
-
-            if (status == MediaPlayer.Status.PLAYING) {
-                pause(player);
-            } else if (status == MediaPlayer.Status.STOPPED ||
-                    status == MediaPlayer.Status.PAUSED ||
-                    status == MediaPlayer.Status.READY) {
-                play(player);
-            }
-        }
-    }
-
-    @FXML
-    public void fullScreen(MouseEvent mouseEvent) {
-        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-            primaryStage.setFullScreen(true);
-        }
-    }
-
-    @FXML
-    public void togetherPlay(ActionEvent actionEvent) {
-        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PLAY);
-        client.send(message.toJson());
-    }
-
-    @FXML
-    public void togetherPause(ActionEvent actionEvent) {
-        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PAUSE);
-        client.send(message.toJson());
-    }
-
-    @FXML
-    public void togetherStop(ActionEvent actionEvent) {
-        ClientMovieMessage message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.STOP);
-        client.send(message.toJson());
-    }
-
-    // 复制星星号
-    @FXML
-    public void copyNumber(ActionEvent actionEvent) {
-        Clipboard clipboard = Clipboard.getSystemClipboard();
-        ClipboardContent content = new ClipboardContent();
-        content.putString(client.getSelfNumber());
-        clipboard.setContent(content);
-    }
-
-    // 连接服务器
-    @FXML
-    public void connectServer(ActionEvent actionEvent) {
-        // 关闭连接
-        if (client != null) {
-            client.close();
-            client = null;
-            bindButton.setDisable(true);
-            copyNumberButton.setDisable(true);
-            connectServerButton.setText("连接服务器");
-            return;
-        }
-
-        // 1. 创建对话框
-        TextInputDialog inputDialog = new TextInputDialog();
-        inputDialog.getEditor().setText(ClientConsts.DEFAULT_URL);
-        inputDialog.setTitle("连接服务器");
-        inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConsts.EXAMPLE_URL);
-        inputDialog.setContentText("输入服务器地址：");
-
-        // 2. 设置主窗口
-        inputDialog.initModality(Modality.WINDOW_MODAL);
-        inputDialog.initOwner(primaryStage);
-
-
-        // 3. 显示窗口
-        Optional<String> result = inputDialog.showAndWait();
-
-        // 4. 点击确定后发送消息
-        if (result.isEmpty()) return;
-
-        // 判断地址是否正确
-        String url = result.get();
-        log.info("url = {}", url);
-        if (!url.matches(ClientConsts.URL_REG)) {
-            showAlert("地址格式不正确！", Alert.AlertType.ERROR);
-            return;
-        }
-
-        // 开启新的线程连接服务器
-        new Thread(() -> {
-            try {
-                log.info("正在连接服务器...");
-                client = new WebClient(new URI(url));
-                boolean flag = client.connectBlocking();
-                if (!flag) {
-                    showAlert("服务器连接失败！请重试！", Alert.AlertType.ERROR);
-                    log.error("连接服务器失败！");
-                    return;
-                }
-                showAlert("服务器连接成功！", Alert.AlertType.INFORMATION);
-
-                // 连接成功之后解禁组件
-                copyNumberButton.setDisable(false);
-                bindButton.setDisable(false);
-                Platform.runLater(() -> connectServerButton.setText("断开连接"));
-
-                // 添加观察者
-                client.addObserver(new ClientObserver() {
-                    @Override
-                    public void onConnected(ServerConnectMessage message) {
-                        Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
-                    }
-
-                    @Override
-                    public void onMovie(ServerMovieMessage message) {
-                        MediaPlayer player = mediaView.getMediaPlayer();
-                        if (message.getActionCode() == ActionCode.PLAY) {
-                            play(player);
-                        } else if (message.getActionCode() == ActionCode.PAUSE) {
-                            pause(player);
-                        } else if (message.getActionCode() == ActionCode.STOP) {
-                            stop(player);
-                        } else if (message.getActionCode() == ActionCode.PLAY_WITH_CURRENT_TIME) {
-                            player.seek(Duration.seconds(message.getSeconds()));
-                            play(player);
-                        }
-                    }
-
-                    @Override
-                    public void onBind(ServerBindMessage message) {
-                        // 将客户端设置为已绑定，并更新 ui
-                        client.isBind = true;
-                        Platform.runLater(() -> {
-                            togetherVBox.setDisable(false);
-                            targetNumberLabel.setText(message.getTargetNumber());
-                            bindButton.setText("解除绑定");
-                        });
-                    }
-
-                    @Override
-                    public void onUnBind(ServerUnbindMessage message) {
-                        // 解除绑定
-                        client.isBind = false;
-                        Platform.runLater(() -> {
-                            togetherVBox.setDisable(true); // 禁用一起播放按钮组
-                            targetNumberLabel.setText("");      // 清空另一半的星星号
-                            bindButton.setText("绑定他/她");     // 重置绑定按钮名称
-                        });
-                    }
-
-                    @Override
-                    public void onOffline(ServerOfflineMessage message) {
-                        onUnBind(new ServerUnbindMessage());
-                        showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
-                    }
-                });
-            } catch (URISyntaxException | InterruptedException e) {
-                e.printStackTrace();
-            }
-        }, "ConnectServerThread").start();
-    }
-
-    @FXML
-    public void togetherPlayWithCurrentTime(ActionEvent actionEvent) {
-        double seconds = mediaView.getMediaPlayer().getCurrentTime().toSeconds();
-        ClientMovieMessage movieMessage = new ClientMovieMessage(client.getSelfNumber(),
-                ActionCode.PLAY_WITH_CURRENT_TIME, seconds);
-        client.send(movieMessage.toJson());
-    }
 
     /**************************************************************************
      *
@@ -416,10 +184,14 @@ public class ClientController {
 
     // 加载视频之后，解禁组件禁用
     private void enable() {
+        // client 不为空且已绑定的情况下，解禁同步系列控件
+        if (client != null && client.isBind) togetherVBox.setDisable(false);
+        // 解禁视频播放控件
         playOrPausePane.setDisable(false);
         playOrPausePane.setOpacity(1);
         videoSlider.setDisable(false);
         volumeSlider.setDisable(false);
+        rateSpinner.setDisable(false);
     }
 
     /**
@@ -482,9 +254,261 @@ public class ClientController {
         }
     }
 
-    public WebClient getClient(){
+    public WebClient getClient() {
         return client;
     }
 
 
+    /**************************************************************************
+     *
+     * 组件方法
+     *
+     **************************************************************************/
+    @FXML
+    public void bindButtonAction(ActionEvent actionEvent) {
+        if (client.isBind) unbindNumber(actionEvent);
+        else bindNumber(actionEvent);
+    }
+
+    @FXML
+    public void selectVideo(ActionEvent actionEvent) {
+        // 创建文件选择器
+        FileChooser fileChooser = new FileChooser();
+        // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("MP4 文件（*.mp4）", "*.mp4");
+        fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
+        File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
+
+        // 如果未选择文件，直接返回
+        if (file == null) return;
+
+        // 如果之前已经选择了视频，则销毁之前的视频
+        if (mediaView.getMediaPlayer() != null) {
+            log.debug("销毁媒体");
+            mediaView.getMediaPlayer().dispose();
+        }
+
+        // 将文件转为 uri 路径，加载媒体视频
+        String uri = "file:" + file.toPath().toUri().getPath();
+        Media media = new Media(uri);
+        MediaPlayer mediaPlayer = new MediaPlayer(media);
+        mediaView.setMediaPlayer(mediaPlayer);
+
+        // 3. 媒体加载完毕后
+        mediaPlayer.setOnReady(() -> {
+            // 1. 按钮解禁
+            enable();
+
+            // 2. 设置进度条
+            Duration duration = mediaPlayer.getTotalDuration();
+            videoSlider.setMax(duration.toSeconds());
+            videoSlider.setVisible(true);
+            mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
+                if (!mouse) {
+                    videoSlider.setValue(newValue.toSeconds());
+                    videoDuration.setCurrentDuration(newValue);
+                    videoDurationLabel.setText(videoDuration.toString());
+                }
+            });
+
+            // 绑定音量进度条
+            mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
+            // 绑定倍速
+            mediaPlayer.rateProperty().bindBidirectional(rateSpinner.getValueFactory().valueProperty());/**/
+
+            // 3. 设置视频点击播放/暂停
+            mediaView.setOnMouseClicked(event -> playOrPause(null));
+
+            // 设置进度显示
+            videoDuration.setTotalDuration(duration);
+            videoDurationLabel.setText(videoDuration.toString());
+
+            log.debug("媒体加载完毕");
+        });
+    }
+
+    /**
+     * 播放或者暂停视频
+     *
+     * @param event 点击事件
+     */
+    @FXML
+    public void playOrPause(MouseEvent event) {
+        if (event == null || event.getButton() == MouseButton.PRIMARY) {
+            MediaPlayer player = mediaView.getMediaPlayer();
+            MediaPlayer.Status status = player.getStatus();
+
+            if (status == MediaPlayer.Status.PLAYING) {
+                pause(player);
+            } else if (status == MediaPlayer.Status.STOPPED ||
+                    status == MediaPlayer.Status.PAUSED ||
+                    status == MediaPlayer.Status.READY) {
+                play(player);
+            }
+        }
+    }
+
+    @FXML
+    public void fullScreen(MouseEvent mouseEvent) {
+        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
+            primaryStage.setFullScreen(true);
+        }
+    }
+
+    @FXML
+    public void togetherPlay(ActionEvent actionEvent) {
+        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PLAY);
+        client.send(message.toJson());
+    }
+
+    @FXML
+    public void togetherPause(ActionEvent actionEvent) {
+        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PAUSE);
+        client.send(message.toJson());
+    }
+
+    @FXML
+    public void togetherStop(ActionEvent actionEvent) {
+        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.STOP);
+        client.send(message.toJson());
+    }
+
+    // 复制星星号
+    @FXML
+    public void copyNumber(ActionEvent actionEvent) {
+        Clipboard clipboard = Clipboard.getSystemClipboard();
+        ClipboardContent content = new ClipboardContent();
+        content.putString(client.getSelfNumber());
+        clipboard.setContent(content);
+    }
+
+    // 连接服务器
+    @FXML
+    public void connectServer(ActionEvent actionEvent) {
+        // 关闭连接
+        if (client != null) {
+            client.close();
+            client = null;
+            bindButton.setDisable(true);
+            copyNumberButton.setDisable(true);
+            connectServerButton.setText("连接服务器");
+            selfNumberLabel.setText("");
+            return;
+        }
+
+        // 1. 创建对话框
+        TextInputDialog inputDialog = new TextInputDialog();
+        inputDialog.getEditor().setText(ClientConsts.DEFAULT_URL);
+//        inputDialog.getEditor().setText(ClientConsts.LOCAL_URL);
+        inputDialog.setTitle("连接服务器");
+        inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConsts.EXAMPLE_URL);
+        inputDialog.setContentText("输入服务器地址：");
+
+        // 2. 设置主窗口
+        inputDialog.initModality(Modality.WINDOW_MODAL);
+        inputDialog.initOwner(primaryStage);
+
+
+        // 3. 显示窗口
+        Optional<String> result = inputDialog.showAndWait();
+
+        // 4. 点击确定后发送消息
+        if (result.isEmpty()) return;
+
+        // 判断地址是否正确
+        String url = result.get();
+        log.info("url = {}", url);
+        if (!url.matches(ClientConsts.URL_REG)) {
+            showAlert("地址格式不正确！", Alert.AlertType.ERROR);
+            return;
+        }
+
+        connectProgress.setVisible(true);
+        // 开启新的线程连接服务器
+        new Thread(() -> {
+            try {
+                log.info("正在连接服务器...");
+                client = new WebClient(new URI(url));
+                boolean flag = client.connectBlocking();
+                if (!flag) {
+                    showAlert("服务器连接失败！请重试！", Alert.AlertType.ERROR);
+                    log.error("连接服务器失败！");
+                    return;
+                }
+                showAlert("服务器连接成功！", Alert.AlertType.INFORMATION);
+                Platform.runLater(() -> connectProgress.setVisible(false));
+
+                // 连接成功之后解禁组件
+                copyNumberButton.setDisable(false);
+                bindButton.setDisable(false);
+                Platform.runLater(() -> connectServerButton.setText("断开连接"));
+
+                // 添加观察者
+                client.addObserver(new ClientObserver() {
+                    @Override
+                    public void onConnected(ServerConnectMessage message) {
+                        Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
+                    }
+
+                    @Override
+                    public void onMovie(ServerMovieMessage message) {
+                        MediaPlayer player = mediaView.getMediaPlayer();
+                        if (message.getActionCode() == ActionCode.PLAY) {
+                            play(player);
+                        } else if (message.getActionCode() == ActionCode.PAUSE) {
+                            pause(player);
+                        } else if (message.getActionCode() == ActionCode.STOP) {
+                            stop(player);
+                        } else if (message.getActionCode() == ActionCode.SYNC) {
+                            player.seek(Duration.seconds(message.getSeconds()));
+                            player.setRate(message.getRate());
+                            play(player);
+                        }
+                    }
+
+                    @Override
+                    public void onBind(ServerBindMessage message) {
+                        // 将客户端设置为已绑定，并更新 ui
+                        client.isBind = true;
+                        Platform.runLater(() -> {
+                            // 如果视频已经选择好，解禁按钮
+                            if (mediaView.getMediaPlayer() != null)
+                                togetherVBox.setDisable(false);
+                            targetNumberLabel.setText(message.getTargetNumber());
+                            bindButton.setText("解除绑定");
+                        });
+                    }
+
+                    @Override
+                    public void onUnBind(ServerUnbindMessage message) {
+                        // 解除绑定
+                        client.isBind = false;
+                        Platform.runLater(() -> {
+                            togetherVBox.setDisable(true); // 禁用一起播放按钮组
+                            targetNumberLabel.setText("");      // 清空另一半的星星号
+                            bindButton.setText("绑定他/她");     // 重置绑定按钮名称
+                        });
+                    }
+
+                    @Override
+                    public void onOffline(ServerOfflineMessage message) {
+                        onUnBind(new ServerUnbindMessage());
+                        showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
+                    }
+                });
+            } catch (URISyntaxException | InterruptedException e) {
+                e.printStackTrace();
+            }
+        }, "ConnectServerThread").start();
+    }
+
+
+    @FXML
+    public void synchronization(ActionEvent actionEvent) {
+        MediaPlayer player = mediaView.getMediaPlayer();
+        double seconds = player.getCurrentTime().toSeconds();
+        double rate = player.getRate();
+        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.SYNC, seconds, rate);
+        client.send(message.toJson());
+    }
 }

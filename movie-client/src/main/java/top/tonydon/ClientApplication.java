@@ -33,7 +33,7 @@ public class ClientApplication extends Application {
 
         // 3. 窗口加载完毕后初始化数据
         controller = fxmlLoader.getController();
-        controller.initData();
+        controller.init();
 
         // 4. 显示窗口
         stage.show();

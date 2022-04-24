@@ -76,14 +76,14 @@ public class ServerWebSocket {
             // 3. 解除绑定
         else if (message.getType() == MessageType.CLIENT_UNBIND) doUnbind(message);
 
-        log.info("{} --- {}", session.getId(), message);
+        log.info("{} --- {}", number, message);
     }
 
 
     //处理错误
     @OnError
     public void onError(Throwable error, Session session) {
-        log.info("发生错误{}, {}", session.getId(), error.getMessage());
+        log.info("发生错误{}, {}", number, error.getMessage());
     }
 
     //处理连接关闭
@@ -168,8 +168,10 @@ public class ServerWebSocket {
         WebSocketGroup group = map.get(clientMessage.getSelfNumber());
 
         // 2. 将 ClientMovieMessage 转为 ServerMovieMessage
-        ServerMovieMessage movieMessage =
-                new ServerMovieMessage(clientMessage.getActionCode(), clientMessage.getSeconds());
+        Message movieMessage = new ServerMovieMessage(
+                clientMessage.getActionCode(),
+                clientMessage.getSeconds(),
+                clientMessage.getRate());
 
         // 3. 向双方写回消息
         sendMessage(movieMessage);

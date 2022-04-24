@@ -5,6 +5,8 @@ public class ClientConsts {
 
     public static final String DEFAULT_URL = "ws://tonydon.club:1165/websocket";
 
+    public static final String LOCAL_URL = "ws://localhost:1165/websocket";
+
     public static final String URL_REG = "^ws://[\\S]+";
 
     public static final String TITLE = "星星电影院 v1.0.1";
