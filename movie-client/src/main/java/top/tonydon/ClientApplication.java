@@ -25,7 +25,7 @@ public class ClientApplication extends Application {
         // 2. 加载窗口
         Scene scene = new Scene(parent);
         stage.setWidth(1160);
-        stage.setHeight(650);
+        stage.setHeight(640);
         stage.setResizable(false);
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星.png")).toString()));
         stage.setTitle(ClientConsts.TITLE);
@@ -47,7 +47,6 @@ public class ClientApplication extends Application {
     public void stop() throws Exception {
         super.stop();
         // 关闭客户端
-        if (controller != null && controller.getClient() != null)
-            controller.getClient().closeBlocking();
+        controller.close();
     }
 }

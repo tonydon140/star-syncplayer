@@ -1,7 +1,11 @@
 package top.tonydon;
 
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -13,10 +17,14 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Screen;
@@ -30,6 +38,7 @@ import top.tonydon.domain.VideoDuration;
 import top.tonydon.message.Message;
 import top.tonydon.message.client.*;
 import top.tonydon.message.server.*;
+import top.tonydon.task.ControllerService;
 import top.tonydon.util.ActionCode;
 import top.tonydon.util.ClientObserver;
 
@@ -38,8 +47,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Random;
+
 
 public class ClientController {
     private final Logger log = LoggerFactory.getLogger(ClientController.class);
@@ -67,6 +76,11 @@ public class ClientController {
     public Button connectServerButton;
     public ProgressIndicator connectProgress;
     public Spinner<Number> rateSpinner;
+    public VBox controllerBox;
+    public TextField bsTextField;
+    public AnchorPane moviePane;
+    public HBox leftCB;
+    public HBox rightCB;
 
     /**************************************************************************
      *
@@ -115,6 +129,11 @@ public class ClientController {
             volumeLabel.setText(label);
         });
 
+        // 弹幕长度限制
+        bsTextField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue.length() > 20) bsTextField.setText(oldValue);
+        });
+
         // 等待线程执行结束
         try {
             loadResourceThread.join();
@@ -134,18 +153,63 @@ public class ClientController {
         // 2. 获取主屏幕
         Screen screen = Screen.getPrimary();
 
+        // 创建控件任务
+        ControllerService service = new ControllerService();
+        service.setPeriod(Duration.seconds(1));
+
         // 2. 添加全屏效果
         primaryStage.fullScreenProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
                 Rectangle2D bounds = screen.getBounds();
-                mediaView.setFitWidth(bounds.getWidth());
+                double screenWidth = bounds.getWidth();
+
+                mediaView.setFitWidth(screenWidth);
                 mediaView.setFitHeight(bounds.getHeight());
+
+                // 设置控件的尺寸
+                controllerBox.setPrefWidth(screenWidth);
+                controllerBox.setOpacity(0.6);
+                leftCB.setPrefWidth(screenWidth * 0.35);
+                rightCB.setPrefWidth(screenWidth * 0.65);
             } else {
                 mediaView.setFitWidth(960);
                 mediaView.setFitHeight(540);
+
+                service.cancel();
+                controllerBox.setVisible(true);
+                controllerBox.setPrefWidth(960);
+                controllerBox.setOpacity(1);
+                leftCB.setPrefWidth(336);
+                rightCB.setPrefWidth(624);
             }
         });
 
+
+        // 监听 value，若 value 为 3 倍数则结束任务，隐藏控制栏
+        service.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null && newValue.intValue() % 3 == 0) {
+                service.cancel();
+                controllerBox.setVisible(false);
+            }
+        });
+
+        mediaView.setOnMouseMoved(event -> {
+            // 不是全屏状态下直接返回
+            if (!primaryStage.isFullScreen()) return;
+            // 如果任务是取消状态，重启任务
+            if (service.getState() == Worker.State.CANCELLED) {
+                controllerBox.setVisible(true);
+                service.restart();
+            }
+            // 如果任务就绪状态，开启任务
+            else if (service.getState() == Worker.State.READY) {
+                service.start();
+            }
+            // 任务是运行状态，重置 sum 值
+            else {
+                service.setSum(0);
+            }
+        });
     }
 
 
@@ -192,6 +256,7 @@ public class ClientController {
         videoSlider.setDisable(false);
         volumeSlider.setDisable(false);
         rateSpinner.setDisable(false);
+        bsTextField.setDisable(false);
     }
 
     /**
@@ -254,8 +319,24 @@ public class ClientController {
         }
     }
 
-    public WebClient getClient() {
-        return client;
+    /**
+     * 软件关闭时执行，关闭服务器连接、销毁媒体
+     */
+    public void close() {
+        // 关闭服务器连接
+        if (client != null) {
+            try {
+                client.closeBlocking();
+                log.debug("关闭服务器连接");
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        // 销毁媒体
+        if (mediaView.getMediaPlayer() != null) {
+            mediaView.getMediaPlayer().dispose();
+            log.debug("销毁媒体");
+        }
     }
 
 
@@ -350,9 +431,11 @@ public class ClientController {
 
     @FXML
     public void fullScreen(MouseEvent mouseEvent) {
-        if (mouseEvent.getButton() == MouseButton.PRIMARY) {
-            primaryStage.setFullScreen(true);
-        }
+        // 鼠标左键点击有效
+        if (mouseEvent.getButton() != MouseButton.PRIMARY) return;
+
+        // 设置全屏
+        primaryStage.setFullScreen(!primaryStage.isFullScreen());
     }
 
     @FXML
@@ -510,5 +593,50 @@ public class ClientController {
         double rate = player.getRate();
         Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.SYNC, seconds, rate);
         client.send(message.toJson());
+    }
+
+    @FXML
+    public void sendBulletScreen(ActionEvent actionEvent) {
+        boolean isFullScreen = primaryStage.isFullScreen();
+        // 获取内容
+        String content = bsTextField.getText();
+        bsTextField.setText("");
+        if (content.length() == 0) return;
+        Screen screen = Screen.getPrimary();
+
+        // 设置 Text
+        Text text = new Text(content);
+        text.setFont(new Font(16));
+        text.setFill(Color.web("#EEFFFF"));
+        // 获取宽高
+        double textWidth = text.getLayoutBounds().getWidth();
+        double textHeight = text.getLayoutBounds().getHeight();
+        // 设置 y 坐标
+        text.setY((new Random().nextInt(4) + 1) * textHeight);
+        root.getChildren().add(text);
+
+        // 创建动画
+        double startX = isFullScreen ? screen.getBounds().getWidth() : 960 - textWidth;
+        Duration time = isFullScreen ? Duration.seconds(10) : Duration.seconds(6);
+        KeyFrame kf1 = new KeyFrame(
+                Duration.ZERO,
+                "start",
+                event -> {
+                },
+                new KeyValue(text.xProperty(), startX));
+        KeyFrame kf2 = new KeyFrame(
+                time,
+                "end",
+                event -> root.getChildren().remove(text),
+                new KeyValue(text.xProperty(), 0 - textWidth));
+
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().addAll(kf1, kf2);
+        timeline.play();
+    }
+
+    public void test(ActionEvent actionEvent) {
+        controllerBox.setLayoutY(10);
+
     }
 }

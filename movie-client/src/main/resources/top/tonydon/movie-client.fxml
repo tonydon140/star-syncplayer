@@ -16,94 +16,113 @@
 <?import javafx.scene.control.ProgressIndicator?>
 <?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.control.Spinner?>
+<?import javafx.scene.control.TextField?>
 <AnchorPane fx:id="root"
             fx:controller="top.tonydon.ClientController"
             xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/18">
     <HBox>
-        <AnchorPane prefWidth="980">
-            <VBox alignment="CENTER" spacing="10">
-                <AnchorPane>
-                    <MediaView fx:id="mediaView" fitHeight="540" fitWidth="960"/>
-                </AnchorPane>
+        <AnchorPane fx:id="moviePane"
+                    prefHeight="600"
+                    prefWidth="980">
+            <!--            <VBox alignment="CENTER" spacing="10">-->
+            <AnchorPane prefHeight="540" prefWidth="960">
+                <MediaView fx:id="mediaView" fitHeight="540" fitWidth="960"/>
+            </AnchorPane>
 
-                <VBox>
-                    <Slider fx:id="videoSlider"
-                            disable="true"
-                            layoutY="519.0"
-                            prefHeight="14.0"
-                            prefWidth="960.0"/>
 
-                    <HBox>
-                        <HBox alignment="CENTER_LEFT" prefWidth="300" spacing="15">
-                            <!-- 选择视频按钮 -->
-                            <Button onAction="#selectVideo" text="选择视频">
-                                <HBox.margin>
-                                    <Insets left="20"/>
-                                </HBox.margin>
-                            </Button>
-                            <!-- 时间组件 -->
-                            <Label fx:id="videoDurationLabel" text="0:00/0:00">
-                                <font>
-                                    <Font size="15"/>
-                                </font>
-                            </Label>
-                        </HBox>
+            <VBox fx:id="controllerBox"
+                  AnchorPane.bottomAnchor="0"
+                  prefWidth="960"
+                  style="-fx-background-color: #f4f4f4">
+                <padding>
+                    <Insets bottom="10" top="5"/>
+                </padding>
 
-                        <HBox alignment="CENTER_RIGHT" prefWidth="660" spacing="15">
-                            <!-- 播放/暂停按钮 -->
-                            <AnchorPane fx:id="playOrPausePane" onMouseClicked="#playOrPause" opacity="0.5"
-                                        disable="true">
-                                <cursor>
-                                    <Cursor fx:constant="HAND"/>
-                                </cursor>
-                                <ImageView fx:id="playOrPauseImageView"/>
-                            </AnchorPane>
+                <Slider fx:id="videoSlider"
+                        disable="true"
+                        prefHeight="14.0"
+                        prefWidth="960.0"/>
 
-                            <!-- 声音组件 -->
-                            <ImageView>
-                                <Image url="@icon/声音开.png"/>
-                            </ImageView>
-                            <Slider fx:id="volumeSlider" max="1" value="0.8"/>
-                            <Label fx:id="volumeLabel" prefWidth="40" alignment="CENTER_RIGHT">
-                                80%
-                                <font>
-                                    <Font size="15"/>
-                                </font>
-                            </Label>
+                <HBox>
+                    <HBox fx:id="leftCB"
+                          alignment="CENTER_LEFT"
+                          prefWidth="336"
+                          spacing="15">
+                        <!-- 选择视频按钮 -->
+                        <Button onAction="#selectVideo" text="选择视频">
+                            <HBox.margin>
+                                <Insets left="20"/>
+                            </HBox.margin>
+                        </Button>
+                        <!-- 时间组件 -->
+                        <Label fx:id="videoDurationLabel" text="0:00/0:00">
+                            <font>
+                                <Font size="15"/>
+                            </font>
+                        </Label>
 
-                            <Spinner fx:id="rateSpinner"
-                                     disable="true"
-                                     initialValue="1"
-                                     min="0.5"
-                                     max="2.5"
-                                     amountToStepBy="0.05"
-                                     editable="true"
-                                     prefWidth="80">
-                                <styleClass>
-                                    <Spinner fx:constant="STYLE_CLASS_SPLIT_ARROWS_HORIZONTAL"/>
-                                </styleClass>
-                            </Spinner>
-
-                            <!-- 全屏按钮 -->
-                            <AnchorPane onMouseClicked="#fullScreen">
-                                <HBox.margin>
-                                    <Insets right="20"/>
-                                </HBox.margin>
-                                <cursor>
-                                    <Cursor fx:constant="HAND"/>
-                                </cursor>
-                                <ImageView>
-                                    <Image url="@icon/全屏.png"/>
-                                </ImageView>
-                            </AnchorPane>
-                        </HBox>
                     </HBox>
-                </VBox>
+
+                    <HBox fx:id="rightCB"
+                          alignment="CENTER_RIGHT"
+                          prefWidth="624"
+                          spacing="15">
+                        <!-- 弹幕输入框 -->
+                        <TextField fx:id="bsTextField" disable="true" onAction="#sendBulletScreen" promptText="发送弹幕~"/>
+                        <!-- 播放/暂停按钮 -->
+                        <AnchorPane fx:id="playOrPausePane" onMouseClicked="#playOrPause" opacity="0.5"
+                                    disable="true">
+                            <cursor>
+                                <Cursor fx:constant="HAND"/>
+                            </cursor>
+                            <ImageView fx:id="playOrPauseImageView"/>
+                        </AnchorPane>
+
+                        <!-- 声音组件 -->
+                        <ImageView>
+                            <Image url="@icon/声音开.png"/>
+                        </ImageView>
+                        <Slider fx:id="volumeSlider" max="1" value="0.8"/>
+                        <Label fx:id="volumeLabel" prefWidth="40" alignment="CENTER_RIGHT">
+                            80%
+                            <font>
+                                <Font size="15"/>
+                            </font>
+                        </Label>
+
+                        <Spinner fx:id="rateSpinner"
+                                 disable="true"
+                                 initialValue="1"
+                                 min="0.5"
+                                 max="2.5"
+                                 amountToStepBy="0.05"
+                                 editable="true"
+                                 prefWidth="80">
+                            <styleClass>
+                                <Spinner fx:constant="STYLE_CLASS_SPLIT_ARROWS_HORIZONTAL"/>
+                            </styleClass>
+                        </Spinner>
+
+                        <!-- 全屏按钮 -->
+                        <AnchorPane onMouseClicked="#fullScreen">
+                            <HBox.margin>
+                                <Insets right="20"/>
+                            </HBox.margin>
+                            <cursor>
+                                <Cursor fx:constant="HAND"/>
+                            </cursor>
+                            <ImageView>
+                                <Image url="@icon/全屏.png"/>
+                            </ImageView>
+                        </AnchorPane>
+                    </HBox>
+                </HBox>
             </VBox>
+            <!--            </VBox>-->
         </AnchorPane>
         <!--        Spinner -->
-        <AnchorPane prefWidth="160">
+        <AnchorPane prefWidth="160" layoutX="980">
             <VBox spacing="10">
                 <HBox alignment="CENTER_LEFT" spacing="10">
                     <Button fx:id="connectServerButton" onAction="#connectServer">连接服务器</Button>
@@ -139,6 +158,8 @@
                         </tooltip>
                     </Button>
                 </VBox>
+
+                <Button onAction="#test">测试按钮</Button>
             </VBox>
         </AnchorPane>
     </HBox>
