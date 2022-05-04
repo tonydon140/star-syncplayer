@@ -1,9 +1,9 @@
-package top.tonydon.util;
+package top.tonydon.util.observer;
 
 
 import top.tonydon.message.server.*;
 
-public interface ClientObserver extends Observer {
+public interface ClientObserver {
     void onConnected(ServerConnectMessage message);
 
     void onMovie(ServerMovieMessage message);

@@ -39,8 +39,10 @@ import top.tonydon.message.Message;
 import top.tonydon.message.client.*;
 import top.tonydon.message.server.*;
 import top.tonydon.task.ControllerService;
+import top.tonydon.task.CountTask;
 import top.tonydon.util.ActionCode;
-import top.tonydon.util.ClientObserver;
+import top.tonydon.util.observer.ClientObserver;
+import top.tonydon.util.observer.CountObserver;
 
 import java.io.File;
 import java.net.URI;
@@ -105,6 +107,7 @@ public class ClientController {
     private void initialize() {
         // 开启一个线程加载资源初始化一些内容
         Thread loadResourceThread = new Thread(() -> {
+
             videoDuration = new VideoDuration();
             playIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/播放.png")).toString());
             pauseIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/暂停.png")).toString());
@@ -150,21 +153,20 @@ public class ClientController {
         primaryStage = (Stage) root.getScene().getWindow(); // 获取主窗口
         playOrPauseImageView.setImage(playIcon);            // 设置播放按钮图标
 
-        // 2. 获取主屏幕
-        Screen screen = Screen.getPrimary();
+        // 2. 获取主屏幕尺寸
+        Rectangle2D bounds = Screen.getPrimary().getBounds();
+        double screenWidth = bounds.getWidth();
+        double screenHeight = bounds.getHeight();
 
         // 创建控件任务
-        ControllerService service = new ControllerService();
-        service.setPeriod(Duration.seconds(1));
+        CountTask countTask = new CountTask();
+        countTask.ready();
 
         // 2. 添加全屏效果
         primaryStage.fullScreenProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
-                Rectangle2D bounds = screen.getBounds();
-                double screenWidth = bounds.getWidth();
-
                 mediaView.setFitWidth(screenWidth);
-                mediaView.setFitHeight(bounds.getHeight());
+                mediaView.setFitHeight(screenHeight);
 
                 // 设置控件的尺寸
                 controllerBox.setPrefWidth(screenWidth);
@@ -175,7 +177,7 @@ public class ClientController {
                 mediaView.setFitWidth(960);
                 mediaView.setFitHeight(540);
 
-                service.cancel();
+                countTask.stop();
                 controllerBox.setVisible(true);
                 controllerBox.setPrefWidth(960);
                 controllerBox.setOpacity(1);
@@ -185,10 +187,10 @@ public class ClientController {
         });
 
 
-        // 监听 value，若 value 为 3 倍数则结束任务，隐藏控制栏
-        service.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue != null && newValue.intValue() % 3 == 0) {
-                service.cancel();
+        // 监听 value，若 value 为 4 的倍数则结束任务，且任务没有停止，隐藏控制栏
+        countTask.addObserver((old, cur) -> {
+            if (cur % 4 == 0 && !countTask.isStop()) {
+                countTask.stop();
                 controllerBox.setVisible(false);
             }
         });
@@ -196,18 +198,21 @@ public class ClientController {
         mediaView.setOnMouseMoved(event -> {
             // 不是全屏状态下直接返回
             if (!primaryStage.isFullScreen()) return;
-            // 如果任务是取消状态，重启任务
-            if (service.getState() == Worker.State.CANCELLED) {
+
+            // 如果鼠标在控制栏附件，则始终展示控件
+            if (event.getScreenY() > (screenHeight - 80)) {
                 controllerBox.setVisible(true);
-                service.restart();
+                if (!countTask.isStop()) countTask.stop();
+                return;
             }
-            // 如果任务就绪状态，开启任务
-            else if (service.getState() == Worker.State.READY) {
-                service.start();
-            }
-            // 任务是运行状态，重置 sum 值
-            else {
-                service.setSum(0);
+
+            // 如果任务是取消状态，重启任务
+            if (countTask.isStop()) {
+                controllerBox.setVisible(true);
+                countTask.restart();
+            } else {
+                // 任务是运行状态，重置 count 值
+                countTask.setCount(1);
             }
         });
     }
@@ -633,10 +638,5 @@ public class ClientController {
         Timeline timeline = new Timeline();
         timeline.getKeyFrames().addAll(kf1, kf2);
         timeline.play();
-    }
-
-    public void test(ActionEvent actionEvent) {
-        controllerBox.setLayoutY(10);
-
     }
 }

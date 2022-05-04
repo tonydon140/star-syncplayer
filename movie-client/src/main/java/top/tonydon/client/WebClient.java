@@ -7,15 +7,15 @@ import org.slf4j.LoggerFactory;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
 import top.tonydon.message.server.*;
-import top.tonydon.util.ClientObserver;
+import top.tonydon.util.observer.ClientObserver;
 import top.tonydon.util.MessageType;
-import top.tonydon.util.Observable;
+import top.tonydon.util.observer.Observable;
 
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
-public class WebClient extends WebSocketClient implements Observable {
+public class WebClient extends WebSocketClient implements Observable<ClientObserver> {
     private final Logger log = LoggerFactory.getLogger(WebClient.class);
     private final Set<ClientObserver> observerSet = new HashSet<>();
 
