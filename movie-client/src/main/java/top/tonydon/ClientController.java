@@ -555,8 +555,8 @@ public class ClientController {
 
         // 1. 创建对话框
         TextInputDialog inputDialog = new TextInputDialog();
-//        inputDialog.getEditor().setText(ClientConsts.DEFAULT_URL);
-        inputDialog.getEditor().setText(ClientConstants.LOCAL_URL);
+        inputDialog.getEditor().setText(ClientConstants.DEFAULT_URL);
+//        inputDialog.getEditor().setText(ClientConstants.LOCAL_URL);
         inputDialog.setTitle("连接服务器");
         inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConstants.EXAMPLE_URL);
         inputDialog.setContentText("输入服务器地址：");
