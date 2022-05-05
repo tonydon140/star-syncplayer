@@ -420,7 +420,7 @@ public class ClientController {
         // 创建文件选择器
         FileChooser fileChooser = new FileChooser();
         // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("MP4 文件（*.mp4）", "*.mp4");
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("mp4/flv", "*.mp4","*.flv");
         fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
         File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
 
