@@ -22,10 +22,7 @@
             xmlns:fx="http://javafx.com/fxml/1"
             xmlns="http://javafx.com/javafx/18">
     <HBox>
-        <AnchorPane fx:id="moviePane"
-                    prefHeight="600"
-                    prefWidth="980">
-            <!--            <VBox alignment="CENTER" spacing="10">-->
+        <AnchorPane prefHeight="600" prefWidth="980">
             <AnchorPane prefHeight="540" prefWidth="960">
                 <MediaView fx:id="mediaView" fitHeight="540" fitWidth="960"/>
             </AnchorPane>
@@ -47,7 +44,7 @@
                 <HBox>
                     <HBox fx:id="leftCB"
                           alignment="CENTER_LEFT"
-                          prefWidth="336"
+                          prefWidth="288"
                           spacing="15">
                         <!-- 选择视频按钮 -->
                         <Button onAction="#selectVideo" text="选择视频">
@@ -66,10 +63,14 @@
 
                     <HBox fx:id="rightCB"
                           alignment="CENTER_RIGHT"
-                          prefWidth="624"
+                          prefWidth="672"
                           spacing="15">
                         <!-- 弹幕输入框 -->
-                        <TextField fx:id="bsTextField" disable="true" onAction="#sendBulletScreen" promptText="发送弹幕~"/>
+                        <TextField fx:id="bsTextField"
+                                   disable="true"
+                                   prefWidth="200"
+                                   onAction="#sendBulletScreen"
+                                   promptText="发送弹幕~"/>
                         <!-- 播放/暂停按钮 -->
                         <AnchorPane fx:id="playOrPausePane" onMouseClicked="#playOrPause" opacity="0.5"
                                     disable="true">
@@ -119,8 +120,8 @@
                     </HBox>
                 </HBox>
             </VBox>
-            <!--            </VBox>-->
         </AnchorPane>
+
         <!--        Spinner -->
         <AnchorPane prefWidth="160" layoutX="980">
             <VBox spacing="10">

@@ -69,13 +69,14 @@ public class ServerWebSocket {
     public void onMessage(String json, Session session) {
         Message message = JsonMessage.parse(json);
 
-        // 1. 绑定消息
+        // 绑定消息
         if (message.getType() == MessageType.CLIENT_BIND) doBind(message);
-            // 2. 电影消息
+            // 电影消息
         else if (message.getType() == MessageType.CLIENT_MOVIE) doMovie(message);
-            // 3. 解除绑定
+            // 解除绑定
         else if (message.getType() == MessageType.CLIENT_UNBIND) doUnbind(message);
-
+            // 弹幕消息
+        else if (message.getType() == MessageType.CLIENT_BULLET_SCREEN) doBulletScreen(message);
         log.info("{} --- {}", number, message);
     }
 
@@ -176,6 +177,19 @@ public class ServerWebSocket {
         // 3. 向双方写回消息
         sendMessage(movieMessage);
         sendTargetMessage(group.getTarget(), movieMessage);
+    }
+
+    /**
+     * 处理弹幕消息，服务端接收一方发送的弹幕，发送给另一方
+     *
+     * @param message 弹幕消息
+     */
+    private void doBulletScreen(Message message) {
+        ClientBulletScreenMessage clientMessage = (ClientBulletScreenMessage) message;
+        WebSocketGroup group = map.get(clientMessage.getSelfNumber());
+
+        Message bulletScreenMessage = new ServerBulletScreenMessage(clientMessage.getContent());
+        sendTargetMessage(group.getTarget(), bulletScreenMessage);
     }
 
 

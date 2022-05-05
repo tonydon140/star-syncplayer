@@ -2,6 +2,7 @@ package top.tonydon.util;
 
 import top.tonydon.message.Message;
 import top.tonydon.message.client.ClientBindMessage;
+import top.tonydon.message.client.ClientBulletScreenMessage;
 import top.tonydon.message.client.ClientMovieMessage;
 import top.tonydon.message.client.ClientUnbindMessage;
 import top.tonydon.message.server.*;
@@ -23,6 +24,7 @@ public class MessageType {
     public static final int SERVER_UNBIND = 104;
     public static final int SERVER_OFFLINE = 105;
     public static final int SERVER_MOVIE = 106;
+    public static final int SERVER_BULLET_SCREEN = 107;
 
 
     /**************************************************************************
@@ -33,6 +35,7 @@ public class MessageType {
     public static final int CLIENT_BIND = 201;
     public static final int CLIENT_UNBIND = 202;
     public static final int CLIENT_MOVIE = 203;
+    public static final int CLIENT_BULLET_SCREEN = 204;
 
 
     /**
@@ -58,9 +61,11 @@ public class MessageType {
         typeMap.put(SERVER_UNBIND, ServerUnbindMessage.class);
         typeMap.put(SERVER_OFFLINE, ServerOfflineMessage.class);
         typeMap.put(SERVER_MOVIE, ServerMovieMessage.class);
+        typeMap.put(SERVER_BULLET_SCREEN, ServerBulletScreenMessage.class);
 
         typeMap.put(CLIENT_BIND, ClientBindMessage.class);
         typeMap.put(CLIENT_UNBIND, ClientUnbindMessage.class);
         typeMap.put(CLIENT_MOVIE, ClientMovieMessage.class);
+        typeMap.put(CLIENT_BULLET_SCREEN, ClientBulletScreenMessage.class);
     }
 }

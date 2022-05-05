@@ -32,7 +32,7 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
     /**
      * 是否已经和别人绑定
      */
-    public boolean isBind;
+    private boolean isBind;
 
     public WebClient(URI serverUri) {
         super(serverUri);
@@ -87,6 +87,12 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
             ServerMovieMessage serverMovieMessage = (ServerMovieMessage) message;
             observerSet.forEach(clientObserver -> clientObserver.onMovie(serverMovieMessage));
         }
+
+        // 弹幕消息
+        else if (message.getType() == MessageType.SERVER_BULLET_SCREEN) {
+            ServerBulletScreenMessage screenMessage = (ServerBulletScreenMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onBulletScreen(screenMessage));
+        }
     }
 
     @Override
@@ -108,6 +114,13 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
         return targetNumber;
     }
 
+    public boolean isBind(){
+        return isBind;
+    }
+
+    public void setBind(boolean isBind){
+        this.isBind = isBind;
+    }
 
     /**
      * 添加观察者

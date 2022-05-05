@@ -6,7 +6,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import top.tonydon.contant.ClientConsts;
+import top.tonydon.constant.ClientConstants;
 
 import java.io.IOException;
 import java.util.Objects;
@@ -28,7 +28,7 @@ public class ClientApplication extends Application {
         stage.setHeight(640);
         stage.setResizable(false);
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星.png")).toString()));
-        stage.setTitle(ClientConsts.TITLE);
+        stage.setTitle(ClientConstants.TITLE);
         stage.setScene(scene);
 
         // 3. 窗口加载完毕后初始化数据

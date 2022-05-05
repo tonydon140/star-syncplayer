@@ -5,7 +5,6 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.concurrent.Worker;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Rectangle2D;
@@ -33,16 +32,14 @@ import javafx.util.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
-import top.tonydon.contant.ClientConsts;
+import top.tonydon.constant.ClientConstants;
 import top.tonydon.domain.VideoDuration;
 import top.tonydon.message.Message;
 import top.tonydon.message.client.*;
 import top.tonydon.message.server.*;
-import top.tonydon.task.ControllerService;
 import top.tonydon.task.CountTask;
 import top.tonydon.util.ActionCode;
 import top.tonydon.util.observer.ClientObserver;
-import top.tonydon.util.observer.CountObserver;
 
 import java.io.File;
 import java.net.URI;
@@ -80,7 +77,6 @@ public class ClientController {
     public Spinner<Number> rateSpinner;
     public VBox controllerBox;
     public TextField bsTextField;
-    public AnchorPane moviePane;
     public HBox leftCB;
     public HBox rightCB;
 
@@ -95,6 +91,9 @@ public class ClientController {
     private boolean mouse = false;
     private VideoDuration videoDuration;
 
+    private final Color selfColor = Color.WHITESMOKE;
+    private final Color targetColor = Color.web("#FFFF00");
+
     private Image playIcon;
     private Image pauseIcon;
 
@@ -107,14 +106,14 @@ public class ClientController {
     private void initialize() {
         // 开启一个线程加载资源初始化一些内容
         Thread loadResourceThread = new Thread(() -> {
-
-            videoDuration = new VideoDuration();
             playIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/播放.png")).toString());
             pauseIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/暂停.png")).toString());
             log.info("应用程序资源加载完毕");
         }, "LoadResourceThread");
         loadResourceThread.start();
 
+        // 实例化对象
+        videoDuration = new VideoDuration();
 
         // 2. 进度条的监听事件
         videoSlider.setOnMousePressed(event -> mouse = true);
@@ -170,19 +169,19 @@ public class ClientController {
 
                 // 设置控件的尺寸
                 controllerBox.setPrefWidth(screenWidth);
-                controllerBox.setOpacity(0.6);
-                leftCB.setPrefWidth(screenWidth * 0.35);
-                rightCB.setPrefWidth(screenWidth * 0.65);
+                controllerBox.setOpacity(0.8);
+                leftCB.setPrefWidth(screenWidth * 0.3);
+                rightCB.setPrefWidth(screenWidth * 0.7);
             } else {
-                mediaView.setFitWidth(960);
-                mediaView.setFitHeight(540);
+                mediaView.setFitWidth(ClientConstants.MOVIE_WIDTH);
+                mediaView.setFitHeight(ClientConstants.MOVIE_HEIGHT);
 
                 countTask.stop();
-                controllerBox.setVisible(true);
-                controllerBox.setPrefWidth(960);
                 controllerBox.setOpacity(1);
-                leftCB.setPrefWidth(336);
-                rightCB.setPrefWidth(624);
+                controllerBox.setVisible(true);
+                controllerBox.setPrefWidth(ClientConstants.MOVIE_WIDTH);
+                leftCB.setPrefWidth(ClientConstants.MOVIE_WIDTH * 0.3);
+                rightCB.setPrefWidth(ClientConstants.MOVIE_WIDTH * 0.7);
             }
         });
 
@@ -254,7 +253,7 @@ public class ClientController {
     // 加载视频之后，解禁组件禁用
     private void enable() {
         // client 不为空且已绑定的情况下，解禁同步系列控件
-        if (client != null && client.isBind) togetherVBox.setDisable(false);
+        if (client != null && client.isBind()) togetherVBox.setDisable(false);
         // 解禁视频播放控件
         playOrPausePane.setDisable(false);
         playOrPausePane.setOpacity(1);
@@ -292,8 +291,13 @@ public class ClientController {
         // 4. 显示窗口
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
+            // 发送解除绑定消息
             ClientUnbindMessage message = new ClientUnbindMessage(client.getSelfNumber());
             client.send(message.toJson());
+
+            togetherVBox.setDisable(true);      // 禁用一起播放按钮组
+            targetNumberLabel.setText("");      // 清空另一半的星星号
+            bindButton.setText("绑定他/她");     // 重置绑定按钮名称
         }
     }
 
@@ -310,6 +314,22 @@ public class ClientController {
         inputDialog.setHeaderText("绑定他/她");
         inputDialog.setContentText("请输入他/她的星星号：");
 
+        // 设置输入框限制
+        TextField editor = inputDialog.getEditor();
+        editor.textProperty().addListener((observable, oldValue, newValue) -> {
+            // 限制长度为 8 个数字
+            if (newValue.length() > 8) editor.setText(oldValue);
+            // 限制输入只为数字
+            boolean isNumber = true;
+            for (char ch : newValue.toCharArray()) {
+                if (ch < '0' || ch > '9') {
+                    isNumber = false;
+                    break;
+                }
+            }
+            if (!isNumber) editor.setText(oldValue);
+        });
+
         // 2. 设置主窗口
         inputDialog.initModality(Modality.WINDOW_MODAL);
         inputDialog.initOwner(primaryStage);
@@ -318,10 +338,10 @@ public class ClientController {
         Optional<String> result = inputDialog.showAndWait();
 
         // 4. 点击确定后发送消息
-        if (result.isPresent()) {
-            ClientBindMessage clientBindMessage = new ClientBindMessage(client.getSelfNumber(), result.get());
+        result.ifPresent(s -> {
+            ClientBindMessage clientBindMessage = new ClientBindMessage(client.getSelfNumber(), s);
             client.send(clientBindMessage.toJson());
-        }
+        });
     }
 
     /**
@@ -344,6 +364,45 @@ public class ClientController {
         }
     }
 
+    /**
+     * 显示弹幕
+     *
+     * @param content 弹幕文本
+     */
+    private void showBulletScreen(String content, Color color) {
+        boolean isFullScreen = primaryStage.isFullScreen();
+        Screen screen = Screen.getPrimary();
+        // 设置 Text
+        Text text = new Text(content);
+        text.setFont(new Font(16));
+        text.setFill(color);
+        // 获取宽高
+        double textWidth = text.getLayoutBounds().getWidth();
+        double textHeight = text.getLayoutBounds().getHeight();
+        // 设置 y 坐标
+        text.setY((new Random().nextInt(4) + 1) * textHeight);
+        root.getChildren().add(text);
+
+        // 创建动画
+        double startX = isFullScreen ? screen.getBounds().getWidth() : 960 - textWidth;
+        Duration time = isFullScreen ? Duration.seconds(10) : Duration.seconds(6);
+        KeyFrame kf1 = new KeyFrame(
+                Duration.ZERO,
+                "start",
+                event -> {
+                },
+                new KeyValue(text.xProperty(), startX));
+        KeyFrame kf2 = new KeyFrame(
+                time,
+                "end",
+                event -> root.getChildren().remove(text),
+                new KeyValue(text.xProperty(), 0 - textWidth));
+
+        Timeline timeline = new Timeline();
+        timeline.getKeyFrames().addAll(kf1, kf2);
+        timeline.play();
+    }
+
 
     /**************************************************************************
      *
@@ -352,7 +411,7 @@ public class ClientController {
      **************************************************************************/
     @FXML
     public void bindButtonAction(ActionEvent actionEvent) {
-        if (client.isBind) unbindNumber(actionEvent);
+        if (client.isBind()) unbindNumber(actionEvent);
         else bindNumber(actionEvent);
     }
 
@@ -475,8 +534,18 @@ public class ClientController {
     public void connectServer(ActionEvent actionEvent) {
         // 关闭连接
         if (client != null) {
-            client.close();
+            try {
+                client.closeBlocking();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             client = null;
+
+            // 禁用一起播放按钮组
+            togetherVBox.setDisable(true);
+            // 重置星星号组件
+            targetNumberLabel.setText("");      // 清空另一半的星星号
+            bindButton.setText("绑定他/她");     // 重置绑定按钮名称
             bindButton.setDisable(true);
             copyNumberButton.setDisable(true);
             connectServerButton.setText("连接服务器");
@@ -486,10 +555,10 @@ public class ClientController {
 
         // 1. 创建对话框
         TextInputDialog inputDialog = new TextInputDialog();
-        inputDialog.getEditor().setText(ClientConsts.DEFAULT_URL);
-//        inputDialog.getEditor().setText(ClientConsts.LOCAL_URL);
+//        inputDialog.getEditor().setText(ClientConsts.DEFAULT_URL);
+        inputDialog.getEditor().setText(ClientConstants.LOCAL_URL);
         inputDialog.setTitle("连接服务器");
-        inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConsts.EXAMPLE_URL);
+        inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConstants.EXAMPLE_URL);
         inputDialog.setContentText("输入服务器地址：");
 
         // 2. 设置主窗口
@@ -506,7 +575,7 @@ public class ClientController {
         // 判断地址是否正确
         String url = result.get();
         log.info("url = {}", url);
-        if (!url.matches(ClientConsts.URL_REG)) {
+        if (!url.matches(ClientConstants.URL_REG)) {
             showAlert("地址格式不正确！", Alert.AlertType.ERROR);
             return;
         }
@@ -557,7 +626,7 @@ public class ClientController {
                     @Override
                     public void onBind(ServerBindMessage message) {
                         // 将客户端设置为已绑定，并更新 ui
-                        client.isBind = true;
+                        client.setBind(true);
                         Platform.runLater(() -> {
                             // 如果视频已经选择好，解禁按钮
                             if (mediaView.getMediaPlayer() != null)
@@ -570,7 +639,7 @@ public class ClientController {
                     @Override
                     public void onUnBind(ServerUnbindMessage message) {
                         // 解除绑定
-                        client.isBind = false;
+                        client.setBind(false);
                         Platform.runLater(() -> {
                             togetherVBox.setDisable(true); // 禁用一起播放按钮组
                             targetNumberLabel.setText("");      // 清空另一半的星星号
@@ -582,6 +651,11 @@ public class ClientController {
                     public void onOffline(ServerOfflineMessage message) {
                         onUnBind(new ServerUnbindMessage());
                         showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
+                    }
+
+                    @Override
+                    public void onBulletScreen(ServerBulletScreenMessage message) {
+                        Platform.runLater(() -> showBulletScreen(message.getContent(), targetColor));
                     }
                 });
             } catch (URISyntaxException | InterruptedException e) {
@@ -602,41 +676,18 @@ public class ClientController {
 
     @FXML
     public void sendBulletScreen(ActionEvent actionEvent) {
-        boolean isFullScreen = primaryStage.isFullScreen();
         // 获取内容
         String content = bsTextField.getText();
-        bsTextField.setText("");
         if (content.length() == 0) return;
-        Screen screen = Screen.getPrimary();
-
-        // 设置 Text
-        Text text = new Text(content);
-        text.setFont(new Font(16));
-        text.setFill(Color.web("#EEFFFF"));
-        // 获取宽高
-        double textWidth = text.getLayoutBounds().getWidth();
-        double textHeight = text.getLayoutBounds().getHeight();
-        // 设置 y 坐标
-        text.setY((new Random().nextInt(4) + 1) * textHeight);
-        root.getChildren().add(text);
-
-        // 创建动画
-        double startX = isFullScreen ? screen.getBounds().getWidth() : 960 - textWidth;
-        Duration time = isFullScreen ? Duration.seconds(10) : Duration.seconds(6);
-        KeyFrame kf1 = new KeyFrame(
-                Duration.ZERO,
-                "start",
-                event -> {
-                },
-                new KeyValue(text.xProperty(), startX));
-        KeyFrame kf2 = new KeyFrame(
-                time,
-                "end",
-                event -> root.getChildren().remove(text),
-                new KeyValue(text.xProperty(), 0 - textWidth));
-
-        Timeline timeline = new Timeline();
-        timeline.getKeyFrames().addAll(kf1, kf2);
-        timeline.play();
+        bsTextField.setText("");
+        // 显示弹幕
+        showBulletScreen(content, selfColor);
+        // 如果已经建立了绑定，则发送弹幕消息
+        if (client != null && client.isBind()) {
+            Message message = new ClientBulletScreenMessage(client.getSelfNumber(), content);
+            client.send(message.toJson());
+        }
     }
+
+
 }

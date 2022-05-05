@@ -14,4 +14,5 @@ public interface ClientObserver {
 
     void onOffline(ServerOfflineMessage message);
 
+    void onBulletScreen(ServerBulletScreenMessage message);
 }
