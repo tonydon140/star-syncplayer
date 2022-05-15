@@ -7,7 +7,11 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.Cursor;
+import javafx.scene.ImageCursor;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -22,6 +26,7 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
+import javafx.scene.robot.Robot;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -40,6 +45,7 @@ import top.tonydon.message.server.*;
 import top.tonydon.task.CountTask;
 import top.tonydon.util.ActionCode;
 import top.tonydon.util.observer.ClientObserver;
+import top.tonydon.util.observer.CountObserver;
 
 import java.io.File;
 import java.net.URI;
@@ -47,6 +53,7 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 
 public class ClientController {
@@ -88,14 +95,19 @@ public class ClientController {
 
     private WebClient client;
     private Stage primaryStage;
-    private boolean mouse = false;
+    private Scene primaryScene;
     private VideoDuration videoDuration;
+    private Robot robot;
+    private CountTask countTask;
 
     private final Color selfColor = Color.WHITESMOKE;
     private final Color targetColor = Color.web("#FFFF00");
 
     private Image playIcon;
     private Image pauseIcon;
+
+    private boolean mouse;
+    private boolean isMouseBottom;
 
     /**************************************************************************
      *
@@ -114,6 +126,8 @@ public class ClientController {
 
         // 实例化对象
         videoDuration = new VideoDuration();
+        robot = new Robot();
+        countTask = new CountTask(TimeUnit.SECONDS, 1);
 
         // 2. 进度条的监听事件
         videoSlider.setOnMousePressed(event -> mouse = true);
@@ -148,18 +162,18 @@ public class ClientController {
      * 页面加载完毕后执行的初始化操作
      */
     public void init() {
-        // 初始化变量
-        primaryStage = (Stage) root.getScene().getWindow(); // 获取主窗口
-        playOrPauseImageView.setImage(playIcon);            // 设置播放按钮图标
+        // 获得主场景
+        primaryScene = root.getScene();
+        // 获得主窗口
+        primaryStage = (Stage) primaryScene.getWindow();
+        // 设置播放按钮图标
+        playOrPauseImageView.setImage(playIcon);
 
         // 2. 获取主屏幕尺寸
         Rectangle2D bounds = Screen.getPrimary().getBounds();
         double screenWidth = bounds.getWidth();
         double screenHeight = bounds.getHeight();
 
-        // 创建控件任务
-        CountTask countTask = new CountTask();
-        countTask.ready();
 
         // 2. 添加全屏效果
         primaryStage.fullScreenProperty().addListener((observable, oldValue, newValue) -> {
@@ -173,46 +187,56 @@ public class ClientController {
                 leftCB.setPrefWidth(screenWidth * 0.3);
                 rightCB.setPrefWidth(screenWidth * 0.7);
             } else {
+                // 恢复视频窗口尺寸
                 mediaView.setFitWidth(ClientConstants.MOVIE_WIDTH);
                 mediaView.setFitHeight(ClientConstants.MOVIE_HEIGHT);
 
-                countTask.stop();
                 controllerBox.setOpacity(1);
                 controllerBox.setVisible(true);
                 controllerBox.setPrefWidth(ClientConstants.MOVIE_WIDTH);
                 leftCB.setPrefWidth(ClientConstants.MOVIE_WIDTH * 0.3);
                 rightCB.setPrefWidth(ClientConstants.MOVIE_WIDTH * 0.7);
+
+                // 恢复鼠标
+                primaryScene.setCursor(Cursor.DEFAULT);
             }
         });
 
-
-        // 监听 value，若 value 为 4 的倍数则结束任务，且任务没有停止，隐藏控制栏
+        // 启动任务
+        countTask.start();
         countTask.addObserver((old, cur) -> {
-            if (cur % 4 == 0 && !countTask.isStop()) {
-                countTask.stop();
-                controllerBox.setVisible(false);
+            // 当视频正在播放时，每搁一段时间移动一下鼠标
+            boolean isPlay = cur % ClientConstants.MOUSE_MOVE_INTERVAL == 0
+                    && mediaView.getMediaPlayer() != null
+                    && mediaView.getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING;
+            if (isPlay) {
+                Platform.runLater(() -> {
+                    double mouseX = robot.getMouseX();
+                    double mouseY = robot.getMouseY();
+                    robot.mouseMove(mouseX + 1, mouseY + 1);
+                    robot.mouseMove(mouseX, mouseY);
+                    log.debug("mouse move");
+                });
             }
+
+            // 全屏状态下、鼠标不在控制栏附近、鼠标指针没有隐藏，则每隔大约两秒隐藏鼠标
+            if (primaryStage.isFullScreen() && !isMouseBottom && primaryScene.getCursor() != Cursor.NONE && cur % 2 == 0)
+                primaryScene.setCursor(Cursor.NONE);
+
+//            log.debug("count = {}", cur);
         });
 
+        // 监听全屏鼠标移动
         mediaView.setOnMouseMoved(event -> {
             // 不是全屏状态下直接返回
             if (!primaryStage.isFullScreen()) return;
 
-            // 如果鼠标在控制栏附件，则始终展示控件
-            if (event.getScreenY() > (screenHeight - 80)) {
-                controllerBox.setVisible(true);
-                if (!countTask.isStop()) countTask.stop();
-                return;
-            }
+            // 显示鼠标
+            primaryScene.setCursor(Cursor.DEFAULT);
 
-            // 如果任务是取消状态，重启任务
-            if (countTask.isStop()) {
-                controllerBox.setVisible(true);
-                countTask.restart();
-            } else {
-                // 任务是运行状态，重置 count 值
-                countTask.setCount(1);
-            }
+            // 鼠标是否在控制栏附近
+            isMouseBottom = event.getScreenY() > (screenHeight - 80);
+            controllerBox.setVisible(isMouseBottom);
         });
     }
 
@@ -362,6 +386,9 @@ public class ClientController {
             mediaView.getMediaPlayer().dispose();
             log.debug("销毁媒体");
         }
+        // 关闭任务
+        countTask.stop();
+        log.debug("结束任务");
     }
 
     /**
@@ -420,7 +447,7 @@ public class ClientController {
         // 创建文件选择器
         FileChooser fileChooser = new FileChooser();
         // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("mp4/flv", "*.mp4","*.flv");
+        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("mp4/flv", "*.mp4", "*.flv");
         fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
         File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
 
@@ -445,27 +472,34 @@ public class ClientController {
             enable();
 
             // 2. 设置进度条
-            Duration duration = mediaPlayer.getTotalDuration();
-            videoSlider.setMax(duration.toSeconds());
+            Duration totalDuration = mediaPlayer.getTotalDuration();
+            videoSlider.setMax(totalDuration.toSeconds());
             videoSlider.setVisible(true);
             mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
                 if (!mouse) {
                     videoSlider.setValue(newValue.toSeconds());
                     videoDuration.setCurrentDuration(newValue);
                     videoDurationLabel.setText(videoDuration.toString());
+
+                    // 当播放结束时暂停
+                    double temp = totalDuration.toMillis() - newValue.toMillis();
+                    if (temp <= 120) {
+                        pause(mediaPlayer);
+//                        log.debug("pause");
+                    }
                 }
             });
 
             // 绑定音量进度条
             mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
             // 绑定倍速
-            mediaPlayer.rateProperty().bindBidirectional(rateSpinner.getValueFactory().valueProperty());/**/
+            mediaPlayer.rateProperty().bindBidirectional(rateSpinner.getValueFactory().valueProperty());
 
             // 3. 设置视频点击播放/暂停
             mediaView.setOnMouseClicked(event -> playOrPause(null));
 
             // 设置进度显示
-            videoDuration.setTotalDuration(duration);
+            videoDuration.setTotalDuration(totalDuration);
             videoDurationLabel.setText(videoDuration.toString());
 
             log.debug("媒体加载完毕");
@@ -690,4 +724,7 @@ public class ClientController {
     }
 
 
+    public void test(ActionEvent actionEvent) {
+
+    }
 }

@@ -158,6 +158,7 @@
                             </Tooltip>
                         </tooltip>
                     </Button>
+                    <Button onAction="#test">测试</Button>
                 </VBox>
             </VBox>
         </AnchorPane>
