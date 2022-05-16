@@ -1,20 +1,18 @@
 package top.tonydon.message.client;
 
-
+import top.tonydon.message.Message;
 import top.tonydon.util.MessageType;
 
 /**
- * 绑定消息，将 selfNumber 和 targetNumber 在服务端绑定起来
+ * 绑定消息
  */
-public class ClientBindMessage extends ClientMessage {
-
+public class BindMessage extends Message {
     private String targetNumber;
 
-    public ClientBindMessage() {
+    public BindMessage() {
     }
 
-    public ClientBindMessage(String selfNumber, String targetNumber) {
-        super(selfNumber);
+    public BindMessage(String targetNumber) {
         this.targetNumber = targetNumber;
     }
 
@@ -27,14 +25,14 @@ public class ClientBindMessage extends ClientMessage {
     }
 
     @Override
-    public int getType() {
-        return MessageType.CLIENT_BIND;
-    }
-
-    @Override
     public String toString() {
         return "BindMessage{" +
                 "targetNumber='" + targetNumber + '\'' +
                 "} " + super.toString();
+    }
+
+    @Override
+    public int getType() {
+        return MessageType.BIND;
     }
 }
