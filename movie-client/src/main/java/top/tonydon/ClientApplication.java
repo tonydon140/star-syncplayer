@@ -27,7 +27,7 @@ public class ClientApplication extends Application {
         stage.setWidth(1160);
         stage.setHeight(640);
         stage.setResizable(false);
-        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星.png")).toString()));
+        stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星128.png")).toString()));
         stage.setTitle(ClientConstants.TITLE);
         stage.setScene(scene);
 

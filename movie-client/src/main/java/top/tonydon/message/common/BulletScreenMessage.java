@@ -1,4 +1,4 @@
-package top.tonydon.message.client;
+package top.tonydon.message.common;
 
 import top.tonydon.message.Message;
 import top.tonydon.util.MessageType;
@@ -28,5 +28,12 @@ public class BulletScreenMessage extends Message {
     @Override
     public int getType() {
         return MessageType.BULLET_SCREEN;
+    }
+
+    @Override
+    public String toString() {
+        return "BulletScreenMessage{" +
+                "content='" + content + '\'' +
+                "} " + super.toString();
     }
 }

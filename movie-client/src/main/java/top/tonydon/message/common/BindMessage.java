@@ -1,4 +1,4 @@
-package top.tonydon.message.client;
+package top.tonydon.message.common;
 
 import top.tonydon.message.Message;
 import top.tonydon.util.MessageType;

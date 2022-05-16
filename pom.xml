@@ -7,7 +7,7 @@
 
     <groupId>top.tonydon</groupId>
     <artifactId>XingXingMovie</artifactId>
-    <version>1.2.0-SNAPSHOT</version>
+    <version>1.2.1-SNAPSHOT</version>
 
     <modules>
         <module>movie-client</module>
@@ -28,7 +28,7 @@
             <dependency>
                 <groupId>top.tonydon</groupId>
                 <artifactId>movie-client</artifactId>
-                <version>1.2.0-SNAPSHOT</version>
+                <version>1.2.1-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

@@ -1,9 +1,24 @@
 package top.tonydon.util;
 
 public class ActionCode {
-    public static final int PLAY = 1;
-    public static final int PAUSE = 2;
-    public static final int STOP = 3;
-    public static final int PLAY_WITH_CURRENT_TIME = 4;
-    public static final int SYNC = 5;
+
+    /**************************************************************************
+     *
+     * 电影相关行为
+     *
+     **************************************************************************/
+    public static final int MOVIE_PLAY = 1;
+    public static final int MOVIE_PAUSE = 2;
+    public static final int MOVIE_STOP = 3;
+    public static final int MOVIE_SYNC = 4;
+
+
+    /**************************************************************************
+     *
+     * 网络相关行为
+     *
+     **************************************************************************/
+    public static final int UNBIND = 10;
+    public static final int OFFLINE = 11;
+
 }

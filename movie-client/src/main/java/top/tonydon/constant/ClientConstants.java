@@ -18,5 +18,5 @@ public class ClientConstants {
     /**
      * 鼠标移动时间间隔
      */
-    public static final int MOUSE_MOVE_INTERVAL = 10;
+    public static final int MOUSE_MOVE_INTERVAL = 50;
 }

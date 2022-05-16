@@ -1,10 +1,7 @@
 package top.tonydon.util;
 
 import top.tonydon.message.Message;
-import top.tonydon.message.client.ClientBindMessage;
-import top.tonydon.message.client.ClientBulletScreenMessage;
-import top.tonydon.message.client.ClientMovieMessage;
-import top.tonydon.message.client.ClientUnbindMessage;
+import top.tonydon.message.common.*;
 import top.tonydon.message.server.*;
 
 import java.util.HashMap;
@@ -12,31 +9,24 @@ import java.util.Map;
 
 public class MessageType {
 
+    /**************************************************************************
+     *
+     * 公共消息
+     *
+     **************************************************************************/
+
+    public static final int BIND = 101;
+    public static final int MOVIE = 102;
+    public static final int BULLET_SCREEN = 103;
+    public static final int NOTIFICATION = 104;
 
     /**************************************************************************
      *
      * 服务端消息
      *
      **************************************************************************/
-    public static final int SERVER_CONNECT = 101;
-    public static final int SERVER_RESPONSE = 102;
-    public static final int SERVER_BIND = 103;
-    public static final int SERVER_UNBIND = 104;
-    public static final int SERVER_OFFLINE = 105;
-    public static final int SERVER_MOVIE = 106;
-    public static final int SERVER_BULLET_SCREEN = 107;
-
-
-    /**************************************************************************
-     *
-     * 客户端消息
-     *
-     **************************************************************************/
-    public static final int CLIENT_BIND = 201;
-    public static final int CLIENT_UNBIND = 202;
-    public static final int CLIENT_MOVIE = 203;
-    public static final int CLIENT_BULLET_SCREEN = 204;
-
+    public static final int SERVER_CONNECT = 201;
+    public static final int SERVER_RESPONSE = 202;
 
     /**
      * 根据类型获取 class 类型
@@ -57,15 +47,10 @@ public class MessageType {
     static {
         typeMap.put(SERVER_CONNECT, ServerConnectMessage.class);
         typeMap.put(SERVER_RESPONSE, ServerResponseMessage.class);
-        typeMap.put(SERVER_BIND, ServerBindMessage.class);
-        typeMap.put(SERVER_UNBIND, ServerUnbindMessage.class);
-        typeMap.put(SERVER_OFFLINE, ServerOfflineMessage.class);
-        typeMap.put(SERVER_MOVIE, ServerMovieMessage.class);
-        typeMap.put(SERVER_BULLET_SCREEN, ServerBulletScreenMessage.class);
 
-        typeMap.put(CLIENT_BIND, ClientBindMessage.class);
-        typeMap.put(CLIENT_UNBIND, ClientUnbindMessage.class);
-        typeMap.put(CLIENT_MOVIE, ClientMovieMessage.class);
-        typeMap.put(CLIENT_BULLET_SCREEN, ClientBulletScreenMessage.class);
+        typeMap.put(BIND, BindMessage.class);
+        typeMap.put(NOTIFICATION, Notification.class);
+        typeMap.put(MOVIE, MovieMessage.class);
+        typeMap.put(BULLET_SCREEN, BulletScreenMessage.class);
     }
 }

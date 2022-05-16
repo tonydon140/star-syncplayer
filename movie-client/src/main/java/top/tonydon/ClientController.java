@@ -7,10 +7,8 @@ import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
-import javafx.scene.ImageCursor;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -38,14 +36,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
 import top.tonydon.constant.ClientConstants;
-import top.tonydon.domain.VideoDuration;
+import top.tonydon.util.VideoDuration;
 import top.tonydon.message.Message;
-import top.tonydon.message.client.*;
+import top.tonydon.message.common.*;
 import top.tonydon.message.server.*;
 import top.tonydon.task.CountTask;
 import top.tonydon.util.ActionCode;
 import top.tonydon.util.observer.ClientObserver;
-import top.tonydon.util.observer.CountObserver;
 
 import java.io.File;
 import java.net.URI;
@@ -300,9 +297,8 @@ public class ClientController {
     /**
      * 解除绑定
      *
-     * @param actionEvent 点击事件
      */
-    public void unbindNumber(ActionEvent actionEvent) {
+    public void unbindNumber() {
         // 1. 创建确认信息
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("确认消息");
@@ -316,8 +312,7 @@ public class ClientController {
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
             // 发送解除绑定消息
-            ClientUnbindMessage message = new ClientUnbindMessage(client.getSelfNumber());
-            client.send(message.toJson());
+            client.send(new Notification(ActionCode.UNBIND).toJson());
 
             togetherVBox.setDisable(true);      // 禁用一起播放按钮组
             targetNumberLabel.setText("");      // 清空另一半的星星号
@@ -329,9 +324,8 @@ public class ClientController {
     /**
      * 绑定另一个人
      *
-     * @param actionEvent 点击事件
      */
-    public void bindNumber(ActionEvent actionEvent) {
+    public void bindNumber() {
         // 1. 创建对话框
         TextInputDialog inputDialog = new TextInputDialog();
         inputDialog.setTitle("绑定他/她");
@@ -362,9 +356,8 @@ public class ClientController {
         Optional<String> result = inputDialog.showAndWait();
 
         // 4. 点击确定后发送消息
-        result.ifPresent(s -> {
-            ClientBindMessage clientBindMessage = new ClientBindMessage(client.getSelfNumber(), s);
-            client.send(clientBindMessage.toJson());
+        result.ifPresent(number -> {
+            client.send(new BindMessage(number).toJson());
         });
     }
 
@@ -437,13 +430,13 @@ public class ClientController {
      *
      **************************************************************************/
     @FXML
-    public void bindButtonAction(ActionEvent actionEvent) {
-        if (client.isBind()) unbindNumber(actionEvent);
-        else bindNumber(actionEvent);
+    public void bindButtonAction() {
+        if (client.isBind()) unbindNumber();
+        else bindNumber();
     }
 
     @FXML
-    public void selectVideo(ActionEvent actionEvent) {
+    public void selectVideo() {
         // 创建文件选择器
         FileChooser fileChooser = new FileChooser();
         // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
@@ -538,19 +531,19 @@ public class ClientController {
 
     @FXML
     public void togetherPlay(ActionEvent actionEvent) {
-        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PLAY);
+        Message message = new MovieMessage(ActionCode.MOVIE_PLAY);
         client.send(message.toJson());
     }
 
     @FXML
     public void togetherPause(ActionEvent actionEvent) {
-        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.PAUSE);
+        Message message = new MovieMessage(ActionCode.MOVIE_PAUSE);
         client.send(message.toJson());
     }
 
     @FXML
     public void togetherStop(ActionEvent actionEvent) {
-        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.STOP);
+        Message message = new MovieMessage(ActionCode.MOVIE_STOP);
         client.send(message.toJson());
     }
 
@@ -589,8 +582,10 @@ public class ClientController {
 
         // 1. 创建对话框
         TextInputDialog inputDialog = new TextInputDialog();
-        inputDialog.getEditor().setText(ClientConstants.DEFAULT_URL);
-//        inputDialog.getEditor().setText(ClientConstants.LOCAL_URL);
+        // 默认远程服务器
+//        inputDialog.getEditor().setText(ClientConstants.DEFAULT_URL);
+        // 本地服务器
+        inputDialog.getEditor().setText(ClientConstants.LOCAL_URL);
         inputDialog.setTitle("连接服务器");
         inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConstants.EXAMPLE_URL);
         inputDialog.setContentText("输入服务器地址：");
@@ -642,15 +637,15 @@ public class ClientController {
                     }
 
                     @Override
-                    public void onMovie(ServerMovieMessage message) {
+                    public void onMovie(MovieMessage message) {
                         MediaPlayer player = mediaView.getMediaPlayer();
-                        if (message.getActionCode() == ActionCode.PLAY) {
+                        if (message.getActionCode() == ActionCode.MOVIE_PLAY) {
                             play(player);
-                        } else if (message.getActionCode() == ActionCode.PAUSE) {
+                        } else if (message.getActionCode() == ActionCode.MOVIE_PAUSE) {
                             pause(player);
-                        } else if (message.getActionCode() == ActionCode.STOP) {
+                        } else if (message.getActionCode() == ActionCode.MOVIE_STOP) {
                             stop(player);
-                        } else if (message.getActionCode() == ActionCode.SYNC) {
+                        } else if (message.getActionCode() == ActionCode.MOVIE_SYNC) {
                             player.seek(Duration.seconds(message.getSeconds()));
                             player.setRate(message.getRate());
                             play(player);
@@ -658,7 +653,7 @@ public class ClientController {
                     }
 
                     @Override
-                    public void onBind(ServerBindMessage message) {
+                    public void onBind(BindMessage message) {
                         // 将客户端设置为已绑定，并更新 ui
                         client.setBind(true);
                         Platform.runLater(() -> {
@@ -671,7 +666,7 @@ public class ClientController {
                     }
 
                     @Override
-                    public void onUnBind(ServerUnbindMessage message) {
+                    public void onUnbind() {
                         // 解除绑定
                         client.setBind(false);
                         Platform.runLater(() -> {
@@ -679,16 +674,17 @@ public class ClientController {
                             targetNumberLabel.setText("");      // 清空另一半的星星号
                             bindButton.setText("绑定他/她");     // 重置绑定按钮名称
                         });
+                        showAlert("另一半解除绑定", Alert.AlertType.INFORMATION);
                     }
 
                     @Override
-                    public void onOffline(ServerOfflineMessage message) {
-                        onUnBind(new ServerUnbindMessage());
+                    public void onOffline() {
+                        onUnbind();
                         showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
                     }
 
                     @Override
-                    public void onBulletScreen(ServerBulletScreenMessage message) {
+                    public void onBulletScreen(BulletScreenMessage message) {
                         Platform.runLater(() -> showBulletScreen(message.getContent(), targetColor));
                     }
                 });
@@ -704,10 +700,15 @@ public class ClientController {
         MediaPlayer player = mediaView.getMediaPlayer();
         double seconds = player.getCurrentTime().toSeconds();
         double rate = player.getRate();
-        Message message = new ClientMovieMessage(client.getSelfNumber(), ActionCode.SYNC, seconds, rate);
+        Message message = new MovieMessage( ActionCode.MOVIE_SYNC, seconds, rate);
         client.send(message.toJson());
     }
 
+    /**
+     * 发送弹幕
+     *
+     * @param actionEvent 按钮事件
+     */
     @FXML
     public void sendBulletScreen(ActionEvent actionEvent) {
         // 获取内容
@@ -718,8 +719,7 @@ public class ClientController {
         showBulletScreen(content, selfColor);
         // 如果已经建立了绑定，则发送弹幕消息
         if (client != null && client.isBind()) {
-            Message message = new ClientBulletScreenMessage(client.getSelfNumber(), content);
-            client.send(message.toJson());
+            client.send(new BulletScreenMessage(content).toJson());
         }
     }
 

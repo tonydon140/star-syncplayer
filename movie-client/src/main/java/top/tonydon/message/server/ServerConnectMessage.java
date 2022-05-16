@@ -28,24 +28,10 @@ public class ServerConnectMessage extends Message {
         this.number = number;
     }
 
-    public static ServerConnectMessage success() {
-        // 随机生成 8 位数字字符串
-        String number = randomNumbers();
-        return new ServerConnectMessage(number);
-    }
 
     @Override
     public int getType() {
         return MessageType.SERVER_CONNECT;
-    }
-
-    private static String randomNumbers() {
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 8; i++) {
-            sb.append(random.nextInt(10));
-        }
-        return sb.toString();
     }
 
     @Override

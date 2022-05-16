@@ -6,7 +6,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
+import top.tonydon.message.common.*;
 import top.tonydon.message.server.*;
+import top.tonydon.util.ActionCode;
 import top.tonydon.util.observer.ClientObserver;
 import top.tonydon.util.MessageType;
 import top.tonydon.util.observer.Observable;
@@ -52,7 +54,7 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
     public void onMessage(String json) {
         // 1. 转换 json 到对象
         Message message = JsonMessage.parse(json);
-        log.info("message = {}", message);
+        log.info("JsonMessage --- {}", json);
 
         // 2. 对不同的消息执行不同的处理
         if (message.getType() == MessageType.SERVER_CONNECT) {
@@ -64,34 +66,32 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
         }
 
         // 绑定处理
-        else if (message.getType() == MessageType.SERVER_BIND) {
-            ServerBindMessage serverBindMessage = (ServerBindMessage) message;
-            this.targetNumber = serverBindMessage.getTargetNumber();
-            observerSet.forEach(clientObserver -> clientObserver.onBind(serverBindMessage));
+        else if (message.getType() == MessageType.BIND) {
+            BindMessage bindMessage = (BindMessage) message;
+            this.targetNumber = bindMessage.getTargetNumber();
+            observerSet.forEach(clientObserver -> clientObserver.onBind(bindMessage));
         }
 
-        // 被解除绑定消息
-        else if (message.getType() == MessageType.SERVER_UNBIND) {
-            ServerUnbindMessage serverUnbindMessage = (ServerUnbindMessage) message;
-            observerSet.forEach(clientObserver -> clientObserver.onUnBind(serverUnbindMessage));
+        // 通知消息
+        else if (message.getType() == MessageType.NOTIFICATION) {
+            int code = ((Notification) message).getActionCode();
+            // 另一半下线
+            if (code == ActionCode.OFFLINE) observerSet.forEach(ClientObserver::onOffline);
+            // 另一半解除绑定
+            else if (code == ActionCode.UNBIND) observerSet.forEach(ClientObserver::onUnbind);
         }
 
-        // 另一半掉线
-        else if (message.getType() == MessageType.SERVER_OFFLINE) {
-            ServerOfflineMessage serverOfflineMessage = (ServerOfflineMessage) message;
-            observerSet.forEach(clientObserver -> clientObserver.onOffline(serverOfflineMessage));
-        }
 
         // 电影消息
-        else if (message.getType() == MessageType.SERVER_MOVIE) {
-            ServerMovieMessage serverMovieMessage = (ServerMovieMessage) message;
-            observerSet.forEach(clientObserver -> clientObserver.onMovie(serverMovieMessage));
+        else if (message.getType() == MessageType.MOVIE) {
+            MovieMessage movieMessage = (MovieMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onMovie(movieMessage));
         }
 
         // 弹幕消息
-        else if (message.getType() == MessageType.SERVER_BULLET_SCREEN) {
-            ServerBulletScreenMessage screenMessage = (ServerBulletScreenMessage) message;
-            observerSet.forEach(clientObserver -> clientObserver.onBulletScreen(screenMessage));
+        else if (message.getType() == MessageType.BULLET_SCREEN) {
+            BulletScreenMessage bulletScreenMessage = (BulletScreenMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onBulletScreen(bulletScreenMessage));
         }
     }
 
@@ -114,11 +114,11 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
         return targetNumber;
     }
 
-    public boolean isBind(){
+    public boolean isBind() {
         return isBind;
     }
 
-    public void setBind(boolean isBind){
+    public void setBind(boolean isBind) {
         this.isBind = isBind;
     }
 

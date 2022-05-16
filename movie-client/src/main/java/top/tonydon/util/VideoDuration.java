@@ -1,4 +1,4 @@
-package top.tonydon.domain;
+package top.tonydon.util;
 
 import javafx.util.Duration;
 
