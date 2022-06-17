@@ -1,9 +1,7 @@
 package top.tonydon.message.server;
 
 import top.tonydon.message.Message;
-import top.tonydon.util.MessageType;
-
-import java.util.Random;
+import top.tonydon.message.MessageType;
 
 /**
  * 连接消息，连接成功返回星星号

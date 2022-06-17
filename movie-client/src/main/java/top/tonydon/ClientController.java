@@ -36,12 +36,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
 import top.tonydon.constant.ClientConstants;
+import top.tonydon.message.common.BindMessage;
+import top.tonydon.message.common.BulletScreenMessage;
+import top.tonydon.message.common.MovieMessage;
+import top.tonydon.message.common.Notification;
+import top.tonydon.message.server.ServerConnectMessage;
 import top.tonydon.util.VideoDuration;
 import top.tonydon.message.Message;
-import top.tonydon.message.common.*;
-import top.tonydon.message.server.*;
 import top.tonydon.task.CountTask;
-import top.tonydon.util.ActionCode;
+import top.tonydon.message.ActionCode;
 import top.tonydon.util.observer.ClientObserver;
 
 import java.io.File;

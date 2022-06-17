@@ -1,6 +1,6 @@
-package top.tonydon.util;
+package top.tonydon.message;
 
-import top.tonydon.message.Message;
+
 import top.tonydon.message.common.*;
 import top.tonydon.message.server.*;
 

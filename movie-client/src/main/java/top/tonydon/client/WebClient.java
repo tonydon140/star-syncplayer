@@ -6,11 +6,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
-import top.tonydon.message.common.*;
-import top.tonydon.message.server.*;
-import top.tonydon.util.ActionCode;
+import top.tonydon.message.ActionCode;
+import top.tonydon.message.common.BindMessage;
+import top.tonydon.message.common.BulletScreenMessage;
+import top.tonydon.message.common.MovieMessage;
+import top.tonydon.message.common.Notification;
+import top.tonydon.message.server.ServerConnectMessage;
 import top.tonydon.util.observer.ClientObserver;
-import top.tonydon.util.MessageType;
+import top.tonydon.message.MessageType;
 import top.tonydon.util.observer.Observable;
 
 import java.net.URI;

@@ -2,7 +2,6 @@ package top.tonydon.message;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import top.tonydon.util.MessageType;
 
 
 public class JsonMessage {

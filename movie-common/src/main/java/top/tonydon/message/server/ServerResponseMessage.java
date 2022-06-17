@@ -1,7 +1,7 @@
 package top.tonydon.message.server;
 
 import top.tonydon.message.Message;
-import top.tonydon.util.MessageType;
+import top.tonydon.message.MessageType;
 
 public class ServerResponseMessage extends Message {
 

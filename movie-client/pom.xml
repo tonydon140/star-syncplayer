@@ -3,13 +3,13 @@
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>XingXingMovie</artifactId>
         <groupId>top.tonydon</groupId>
-        <version>1.2.1-SNAPSHOT</version>
+        <artifactId>star-movie</artifactId>
+        <version>1.2.2-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>movie-client</artifactId>
+    <artifactId>star-movie-client</artifactId>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
@@ -23,19 +23,16 @@
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
             <version>${javafx.version}</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
             <version>${javafx.version}</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-media</artifactId>
             <version>${javafx.version}</version>
-            <optional>true</optional>
         </dependency>
 
         <!-- Junit -->
@@ -56,8 +53,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.13.2.2</version>
-            <optional>true</optional>
+            <version>2.13.3</version>
         </dependency>
 
         <!-- 模块化的 Java-WebSocket -->
@@ -65,7 +61,6 @@
             <groupId>top.tonydon</groupId>
             <artifactId>Java-WebSocket-Module</artifactId>
             <version>1.5.4-SNAPSHOT</version>
-            <optional>true</optional>
         </dependency>
 
         <!-- Slf4j Logback -->
@@ -73,7 +68,12 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.3.0-alpha14</version>
-            <optional>true</optional>
+        </dependency>
+
+        <!-- Star Movie Common-->
+        <dependency>
+            <groupId>top.tonydon</groupId>
+            <artifactId>star-movie-common</artifactId>
         </dependency>
     </dependencies>
 

@@ -2,12 +2,14 @@ package top.tonydon.ws;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import top.tonydon.message.common.*;
-import top.tonydon.message.server.*;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
-import top.tonydon.util.ActionCode;
-import top.tonydon.util.MessageType;
+import top.tonydon.message.ActionCode;
+import top.tonydon.message.MessageType;
+import top.tonydon.message.common.BindMessage;
+import top.tonydon.message.common.Notification;
+import top.tonydon.message.server.ServerConnectMessage;
+import top.tonydon.message.server.ServerResponseMessage;
 import top.tonydon.util.RandomUtils;
 import top.tonydon.util.WebSocketGroup;
 

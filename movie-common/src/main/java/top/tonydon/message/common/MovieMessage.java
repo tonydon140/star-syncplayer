@@ -1,7 +1,7 @@
 package top.tonydon.message.common;
 
 import top.tonydon.message.Message;
-import top.tonydon.util.MessageType;
+import top.tonydon.message.MessageType;
 
 /**
  * 控制电影相关的信息
