@@ -13,7 +13,30 @@
         </encoder>
     </appender>
 
+
+    <!--输出错误日志-->
+    <appender name="DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 日志名称的格式 -->
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %yellow(%5level) --- [%29.32thread] %cyan(%logger{40}) : %m%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <file>logs/debug.log</file>
+        <!-- 配置滚动的策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/%d{yyyy-MM-dd}.debug.log</fileNamePattern>
+            <!-- 保存的最长时间：天数 -->
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
     <root level="debug">
         <appender-ref ref="console"/>
+        <appender-ref ref="DEBUG"/>
     </root>
 </configuration>

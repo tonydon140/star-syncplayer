@@ -2,5 +2,10 @@ server:
   port: 1165
 
 logging:
-  level:
-    root: info
+  file:
+    name: temp.log
+  logback:
+    rollingpolicy:
+      max-history: 7
+      max-file-size: 256KB
+      file-name-pattern: server.%d{yyyy-MM-dd}.%i.log

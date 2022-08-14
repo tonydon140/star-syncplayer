@@ -1,4 +1,5 @@
 .idea
 */target
+*.log
 movie-server/src/main/java/top/tonydon/controller
 

@@ -1,9 +1,14 @@
 package top.tonydon;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.application.Application;
+import javafx.application.HostServices;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -36,20 +41,27 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.tonydon.client.WebClient;
 import top.tonydon.constant.ClientConstants;
+import top.tonydon.entity.ProjectVersion;
+import top.tonydon.entity.VersionResult;
+import top.tonydon.message.ActionCode;
+import top.tonydon.message.Message;
 import top.tonydon.message.common.BindMessage;
 import top.tonydon.message.common.BulletScreenMessage;
 import top.tonydon.message.common.MovieMessage;
 import top.tonydon.message.common.Notification;
 import top.tonydon.message.server.ServerConnectMessage;
-import top.tonydon.util.VideoDuration;
-import top.tonydon.message.Message;
 import top.tonydon.task.CountTask;
-import top.tonydon.message.ActionCode;
+import top.tonydon.util.AlertUtils;
+import top.tonydon.util.JSONUtils;
+import top.tonydon.util.VideoDuration;
 import top.tonydon.util.observer.ClientObserver;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -60,7 +72,7 @@ public class ClientController {
     private final Logger log = LoggerFactory.getLogger(ClientController.class);
 
     /**************************************************************************
-     *
+     * <p>
      * FXML组件
      *
      **************************************************************************/
@@ -103,33 +115,51 @@ public class ClientController {
     private final Color selfColor = Color.WHITESMOKE;
     private final Color targetColor = Color.web("#FFFF00");
 
-    private Image playIcon;
-    private Image pauseIcon;
+    private final Image PLAY_ICON;
+    private final Image PAUSE_ICON;
 
     private boolean mouse;
     private boolean isMouseBottom;
 
+    private HttpClient httpClient;
+    private HttpRequest httpRequest;
+    private HostServices hostServices;
+
     /**************************************************************************
+     * <p>
+     * 构造方法，进行成员变量的初始化
      *
-     * 初始化方法
+     **************************************************************************/
+    public ClientController() {
+        // Icon
+        this.PLAY_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/播放.png")).toString());
+        this.PAUSE_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/暂停.png")).toString());
+
+        this.videoDuration = new VideoDuration();
+        this.robot = new Robot();
+        this.countTask = new CountTask(TimeUnit.SECONDS, 1);
+
+        // HTTP
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(java.time.Duration.ofSeconds(10))
+                .build();
+        this.httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(ClientConstants.CHECK_UPDATE_URL))
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(10))
+                .build();
+        log.debug("this = {}", this);
+    }
+
+    /**************************************************************************
+     * <p>
+     * 初始化方法，此时组件还没有加载，可以进行一些事件的绑定
      *
      **************************************************************************/
     @FXML
     private void initialize() {
-        // 开启一个线程加载资源初始化一些内容
-        Thread loadResourceThread = new Thread(() -> {
-            playIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/播放.png")).toString());
-            pauseIcon = new Image(Objects.requireNonNull(getClass().getResource("icon/暂停.png")).toString());
-            log.info("应用程序资源加载完毕");
-        }, "LoadResourceThread");
-        loadResourceThread.start();
-
-        // 实例化对象
-        videoDuration = new VideoDuration();
-        robot = new Robot();
-        countTask = new CountTask(TimeUnit.SECONDS, 1);
-
-        // 2. 进度条的监听事件
+        // 1. 进度条的监听事件
         videoSlider.setOnMousePressed(event -> mouse = true);
         videoSlider.setOnMouseReleased(event -> {
             mouse = false;
@@ -149,25 +179,23 @@ public class ClientController {
         bsTextField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue.length() > 20) bsTextField.setText(oldValue);
         });
-
-        // 等待线程执行结束
-        try {
-            loadResourceThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
     }
 
-    /**
+
+    /**************************************************************************
+     * <p>
      * 页面加载完毕后执行的初始化操作
-     */
-    public void init() {
+     *
+     **************************************************************************/
+    public void init(Application application) {
         // 获得主场景
-        primaryScene = root.getScene();
+        this.primaryScene = root.getScene();
         // 获得主窗口
-        primaryStage = (Stage) primaryScene.getWindow();
+        this.primaryStage = (Stage) this.primaryScene.getWindow();
         // 设置播放按钮图标
-        playOrPauseImageView.setImage(playIcon);
+        playOrPauseImageView.setImage(this.PLAY_ICON);
+        // 获取 host
+        this.hostServices = application.getHostServices();
 
         // 2. 获取主屏幕尺寸
         Rectangle2D bounds = Screen.getPrimary().getBounds();
@@ -242,36 +270,24 @@ public class ClientController {
 
 
     /**************************************************************************
-     *
+     * <p>
      * 普通成员方法
      *
      **************************************************************************/
 
-    // 显示提示窗口
-    public void showAlert(String headText, Alert.AlertType alertType) {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(alertType);
-            alert.setTitle(alertType.toString());
-            alert.setHeaderText(headText);
-            alert.initModality(Modality.WINDOW_MODAL);
-            alert.initOwner(primaryStage);
-            alert.show();
-        });
-    }
-
     public void play(MediaPlayer player) {
         player.play();
-        playOrPauseImageView.setImage(pauseIcon);
+        playOrPauseImageView.setImage(PAUSE_ICON);
     }
 
     public void pause(MediaPlayer player) {
         player.pause();
-        playOrPauseImageView.setImage(playIcon);
+        playOrPauseImageView.setImage(PLAY_ICON);
     }
 
     public void stop(MediaPlayer player) {
         player.stop();
-        playOrPauseImageView.setImage(playIcon);
+        playOrPauseImageView.setImage(PLAY_ICON);
     }
 
     // 加载视频之后，解禁组件禁用
@@ -299,7 +315,6 @@ public class ClientController {
 
     /**
      * 解除绑定
-     *
      */
     public void unbindNumber() {
         // 1. 创建确认信息
@@ -326,7 +341,6 @@ public class ClientController {
 
     /**
      * 绑定另一个人
-     *
      */
     public void bindNumber() {
         // 1. 创建对话框
@@ -545,23 +559,25 @@ public class ClientController {
     }
 
     @FXML
-    public void togetherStop(ActionEvent actionEvent) {
+    public void togetherStop() {
         Message message = new MovieMessage(ActionCode.MOVIE_STOP);
         client.send(message.toJson());
     }
 
     // 复制星星号
     @FXML
-    public void copyNumber(ActionEvent actionEvent) {
+    public void copyNumber() {
         Clipboard clipboard = Clipboard.getSystemClipboard();
         ClipboardContent content = new ClipboardContent();
         content.putString(client.getSelfNumber());
         clipboard.setContent(content);
     }
 
-    // 连接服务器
+    /**
+     * 连接服务器
+     */
     @FXML
-    public void connectServer(ActionEvent actionEvent) {
+    public void connectServer() {
         // 关闭连接
         if (client != null) {
             try {
@@ -608,7 +624,7 @@ public class ClientController {
         String url = result.get();
         log.info("url = {}", url);
         if (!url.matches(ClientConstants.URL_REG)) {
-            showAlert("地址格式不正确！", Alert.AlertType.ERROR);
+            AlertUtils.error("地址格式不正确！", "", this.primaryStage);
             return;
         }
 
@@ -620,11 +636,11 @@ public class ClientController {
                 client = new WebClient(new URI(url));
                 boolean flag = client.connectBlocking();
                 if (!flag) {
-                    showAlert("服务器连接失败！请重试！", Alert.AlertType.ERROR);
+                    AlertUtils.error("服务器连接失败！请重试！", "", this.primaryStage);
                     log.error("连接服务器失败！");
                     return;
                 }
-                showAlert("服务器连接成功！", Alert.AlertType.INFORMATION);
+
                 Platform.runLater(() -> connectProgress.setVisible(false));
 
                 // 连接成功之后解禁组件
@@ -637,6 +653,7 @@ public class ClientController {
                     @Override
                     public void onConnected(ServerConnectMessage message) {
                         Platform.runLater(() -> selfNumberLabel.setText(message.getNumber()));
+                        AlertUtils.information("服务器连接成功！", "您的星星号：" + message.getNumber(), primaryStage);
                     }
 
                     @Override
@@ -677,13 +694,13 @@ public class ClientController {
                             targetNumberLabel.setText("");      // 清空另一半的星星号
                             bindButton.setText("绑定他/她");     // 重置绑定按钮名称
                         });
-                        showAlert("另一半解除绑定", Alert.AlertType.INFORMATION);
+                        AlertUtils.information("另一半解除绑定！", "", primaryStage);
                     }
 
                     @Override
                     public void onOffline() {
                         onUnbind();
-                        showAlert("另一半断开连接", Alert.AlertType.INFORMATION);
+                        AlertUtils.information("另一半断开连接！", "", primaryStage);
                     }
 
                     @Override
@@ -698,22 +715,23 @@ public class ClientController {
     }
 
 
+    /**
+     * 同步播放
+     */
     @FXML
-    public void synchronization(ActionEvent actionEvent) {
+    public void synchronization() {
         MediaPlayer player = mediaView.getMediaPlayer();
         double seconds = player.getCurrentTime().toSeconds();
         double rate = player.getRate();
-        Message message = new MovieMessage( ActionCode.MOVIE_SYNC, seconds, rate);
+        Message message = new MovieMessage(ActionCode.MOVIE_SYNC, seconds, rate);
         client.send(message.toJson());
     }
 
     /**
      * 发送弹幕
-     *
-     * @param actionEvent 按钮事件
      */
     @FXML
-    public void sendBulletScreen(ActionEvent actionEvent) {
+    public void sendBulletScreen() {
         // 获取内容
         String content = bsTextField.getText();
         if (content.length() == 0) return;
@@ -726,8 +744,41 @@ public class ClientController {
         }
     }
 
+    /**
+     * 检查软件更新
+     */
+    @FXML
+    public void checkUpdate() {
+        log.debug("check update...");
+        this.httpClient.sendAsync(this.httpRequest, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenAccept((body) -> {
+                    // 解析 JSON
+                    VersionResult result = JSONUtils.parse(body, VersionResult.class);
+                    ProjectVersion version = result.getData();
 
-    public void test(ActionEvent actionEvent) {
+                    // 有新版本
+                    if (version.getVersionNumber() > ClientConstants.VERSION_NUMBER) {
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                            alert.setHeaderText("发现新版本" + version + "！是否前往下载？");
+                            alert.setContentText(version.getDescription());
+                            alert.initModality(Modality.WINDOW_MODAL);
+                            alert.initOwner(primaryStage);
+                            alert.showAndWait()
+                                    .filter(buttonType -> buttonType == ButtonType.OK)
+                                    .ifPresent(response -> this.hostServices.showDocument(ClientConstants.LATEST_URL));
+                        });
+                    } else {
+                        AlertUtils.information("当前版本" + ClientConstants.VERSION + "已是最新版本！", "", primaryStage);
+                    }
+                });
+    }
 
+    /**
+     * 打开软件官网
+     */
+    public void about() {
+        this.hostServices.showDocument(ClientConstants.ABOUT_URL);
     }
 }
