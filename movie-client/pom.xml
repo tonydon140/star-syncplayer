@@ -5,7 +5,7 @@
     <parent>
         <groupId>top.tonydon</groupId>
         <artifactId>star-movie</artifactId>
-        <version>1.2.2-SNAPSHOT</version>
+        <version>1.2.3-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -53,6 +53,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <optional>true</optional>
             <version>2.13.3</version>
         </dependency>
         <dependency>

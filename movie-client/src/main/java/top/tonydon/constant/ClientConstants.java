@@ -19,8 +19,6 @@ public class ClientConstants {
 
     public static final String TITLE = "星星电影院 " + VERSION;
 
-
-//    public static final int VERSION_NUMBER = 6;
     public static final int VERSION_NUMBER = 7;
 
     public static final double MOVIE_HEIGHT = 540;
