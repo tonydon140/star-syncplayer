@@ -24,8 +24,6 @@ public class ClientApplication extends Application {
 
         // 2. 加载窗口
         Scene scene = new Scene(parent);
-        stage.setWidth(1160);
-        stage.setHeight(670);
         stage.setResizable(false);
         stage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/星星128.png")).toString()));
         stage.setTitle(ClientConstants.TITLE);

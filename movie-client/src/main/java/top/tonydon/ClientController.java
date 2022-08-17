@@ -56,7 +56,6 @@ import top.tonydon.util.VideoDuration;
 import top.tonydon.util.observer.ClientObserver;
 
 import java.io.File;
-import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.*;
@@ -90,12 +89,15 @@ public class ClientController {
     public AnchorPane playOrPausePane;
     public Button copyNumberButton;
     public Button connectServerButton;
-    public ProgressIndicator connectProgress;
     public Spinner<Number> rateSpinner;
     public VBox controllerBox;
     public TextField bsTextField;
     public HBox leftCB;
     public HBox rightCB;
+    public Label infoLabel;
+    public ProgressIndicator infoIcon;
+    public MenuBar menuBar;
+    public HBox bodyHBox;
 
     /**************************************************************************
      *
@@ -196,6 +198,8 @@ public class ClientController {
         // 2. 添加全屏效果
         primaryStage.fullScreenProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue) {
+                // 视频窗口尺寸
+                bodyHBox.setLayoutY(0);
                 mediaView.setFitWidth(screenWidth);
                 mediaView.setFitHeight(screenHeight);
 
@@ -204,8 +208,10 @@ public class ClientController {
                 controllerBox.setOpacity(0.8);
                 leftCB.setPrefWidth(screenWidth * 0.3);
                 rightCB.setPrefWidth(screenWidth * 0.7);
+
             } else {
                 // 恢复视频窗口尺寸
+                bodyHBox.setLayoutY(25);
                 mediaView.setFitWidth(ClientConstants.MOVIE_WIDTH);
                 mediaView.setFitHeight(ClientConstants.MOVIE_HEIGHT);
 
@@ -240,8 +246,6 @@ public class ClientController {
             // 全屏状态下、鼠标不在控制栏附近、鼠标指针没有隐藏，则每隔大约两秒隐藏鼠标
             if (primaryStage.isFullScreen() && !isMouseBottom && primaryScene.getCursor() != Cursor.NONE && cur % 2 == 0)
                 primaryScene.setCursor(Cursor.NONE);
-
-//            log.debug("count = {}", cur);
         });
 
         // 监听全屏鼠标移动
@@ -254,6 +258,7 @@ public class ClientController {
 
             // 鼠标是否在控制栏附近
             isMouseBottom = event.getScreenY() > (screenHeight - 80);
+//            log.debug("y = {}, isBottom = {}", event.getScreenY(), isMouseBottom);
             controllerBox.setVisible(isMouseBottom);
         });
     }
@@ -264,6 +269,20 @@ public class ClientController {
      * 普通成员方法
      *
      **************************************************************************/
+
+    private void clearInfo(){
+        Platform.runLater(()->{
+            infoLabel.setText("");
+            infoIcon.setVisible(false);
+        });
+    }
+
+    private void setInfo(String info){
+        Platform.runLater(()->{
+            infoLabel.setText(info);
+            infoIcon.setVisible(true);
+        });
+    }
 
     public void play(MediaPlayer player) {
         player.play();
@@ -388,7 +407,8 @@ public class ClientController {
         }
         // 关闭任务
         countTask.stop();
-        log.debug("结束任务");
+        log.debug("结束计时任务");
+        log.debug("客户端关闭");
     }
 
     /**
@@ -453,6 +473,7 @@ public class ClientController {
 
         // 如果未选择文件，直接返回
         if (file == null) return;
+        setInfo("加载视频");
 
         // 如果之前已经选择了视频，则销毁之前的视频
         if (mediaView.getMediaPlayer() != null) {
@@ -503,6 +524,7 @@ public class ClientController {
             videoDurationLabel.setText(videoDuration.toString());
 
             log.debug("媒体加载完毕");
+            clearInfo();
         });
     }
 
@@ -618,7 +640,7 @@ public class ClientController {
             return;
         }
 
-        connectProgress.setVisible(true);
+        setInfo("连接服务器");
         // 开启新的线程连接服务器
         new Thread(() -> {
             try {
@@ -630,13 +652,6 @@ public class ClientController {
                     log.error("连接服务器失败！");
                     return;
                 }
-
-                Platform.runLater(() -> connectProgress.setVisible(false));
-
-                // 连接成功之后解禁组件
-                copyNumberButton.setDisable(false);
-                bindButton.setDisable(false);
-                Platform.runLater(() -> connectServerButton.setText("断开连接"));
 
                 // 添加观察者
                 client.addObserver(new ClientObserver() {
@@ -698,6 +713,12 @@ public class ClientController {
                         Platform.runLater(() -> showBulletScreen(message.getContent(), targetColor));
                     }
                 });
+
+                // 连接成功之后 UI 组件变更
+                copyNumberButton.setDisable(false);
+                bindButton.setDisable(false);
+                Platform.runLater(() -> connectServerButton.setText("断开连接"));
+                clearInfo();
             } catch (URISyntaxException | InterruptedException e) {
                 e.printStackTrace();
             }
@@ -739,6 +760,7 @@ public class ClientController {
      */
     @FXML
     public void checkUpdate() {
+        setInfo("检查更新");
         log.debug("check update...");
 
         // 创建 HTTP 请求
@@ -752,6 +774,7 @@ public class ClientController {
         HTTP_CLIENT
                 .sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
+                    clearInfo();
                     // 如果状态码不是200，抛出Http异常
                     if (response.statusCode() != 200) {
                         throw new HttpException(response.statusCode());
