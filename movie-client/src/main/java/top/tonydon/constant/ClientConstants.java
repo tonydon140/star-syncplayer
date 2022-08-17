@@ -15,11 +15,11 @@ public class ClientConstants {
 
     public static final String URL_REG = "^ws://[\\S]+";
 
-    public static final String VERSION = "v1.2.3";
+    public static final String VERSION = "v1.2.4";
 
     public static final String TITLE = "星星电影院 " + VERSION;
 
-    public static final int VERSION_NUMBER = 7;
+    public static final int VERSION_NUMBER = 8;
 
     public static final double MOVIE_HEIGHT = 540;
 

@@ -1,9 +1,6 @@
 package top.tonydon;
 
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -43,6 +40,8 @@ import top.tonydon.client.WebClient;
 import top.tonydon.constant.ClientConstants;
 import top.tonydon.entity.ProjectVersion;
 import top.tonydon.entity.VersionResult;
+import top.tonydon.exception.HttpException;
+import top.tonydon.exception.ResultException;
 import top.tonydon.message.ActionCode;
 import top.tonydon.message.Message;
 import top.tonydon.message.common.BindMessage;
@@ -57,11 +56,10 @@ import top.tonydon.util.VideoDuration;
 import top.tonydon.util.observer.ClientObserver;
 
 import java.io.File;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.http.*;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -121,8 +119,8 @@ public class ClientController {
     private boolean mouse;
     private boolean isMouseBottom;
 
-    private HttpClient httpClient;
-    private HttpRequest httpRequest;
+    private final HttpClient HTTP_CLIENT;
+    //    private HttpRequest httpRequest;
     private HostServices hostServices;
 
     /**************************************************************************
@@ -140,15 +138,7 @@ public class ClientController {
         this.countTask = new CountTask(TimeUnit.SECONDS, 1);
 
         // HTTP
-        this.httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)
-                .connectTimeout(java.time.Duration.ofSeconds(10))
-                .build();
-        this.httpRequest = HttpRequest.newBuilder()
-                .uri(URI.create(ClientConstants.CHECK_UPDATE_URL))
-                .header("Content-Type", "application/json")
-                .timeout(java.time.Duration.ofSeconds(10))
-                .build();
+        this.HTTP_CLIENT = HttpClient.newHttpClient();
         log.debug("this = {}", this);
     }
 
@@ -750,18 +740,38 @@ public class ClientController {
     @FXML
     public void checkUpdate() {
         log.debug("check update...");
-        this.httpClient.sendAsync(this.httpRequest, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .thenAccept((body) -> {
+
+        // 创建 HTTP 请求
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(ClientConstants.CHECK_UPDATE_URL))
+                .header("Content-Type", "application/json")
+                .timeout(java.time.Duration.ofSeconds(5))
+                .build();
+
+        // 发起请求
+        HTTP_CLIENT
+                .sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> {
+                    // 如果状态码不是200，抛出Http异常
+                    if (response.statusCode() != 200) {
+                        throw new HttpException(response.statusCode());
+                    }
+                    return response.body();
+                }).thenAccept(body -> {
                     // 解析 JSON
                     VersionResult result = JSONUtils.parse(body, VersionResult.class);
                     ProjectVersion version = result.getData();
+
+                    // 如果 code 不是 200，抛出结果异常
+                    if (result.getCode() != 200) {
+                        throw new ResultException(result.getMsg());
+                    }
 
                     // 有新版本
                     if (version.getVersionNumber() > ClientConstants.VERSION_NUMBER) {
                         Platform.runLater(() -> {
                             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                            alert.setHeaderText("发现新版本" + version + "！是否前往下载？");
+                            alert.setHeaderText("发现新版本" + version.getVersion() + "！是否前往下载？");
                             alert.setContentText(version.getDescription());
                             alert.initModality(Modality.WINDOW_MODAL);
                             alert.initOwner(primaryStage);
@@ -772,6 +782,24 @@ public class ClientController {
                     } else {
                         AlertUtils.information("当前版本" + ClientConstants.VERSION + "已是最新版本！", "", primaryStage);
                     }
+                }).exceptionally(throwable -> {
+                    // 捕获异常
+                    Throwable ex = throwable.getCause();
+                    throwable.printStackTrace();
+                    log.warn("{} : {}", ex.getClass(), ex.getMessage());
+
+                    // 鉴别异常类型
+                    if (ex instanceof ResultException) {
+                        AlertUtils.error("请求出错", ex.getMessage(), this.primaryStage);
+                    } else if (ex instanceof HttpConnectTimeoutException) {
+                        checkUpdate();
+                    } else if (ex instanceof HttpTimeoutException) {
+                        AlertUtils.error("请求超时", "网络请求超时，请稍后再试。", this.primaryStage);
+                    }else{
+                        // HTTP 错误、连接错误、等等
+                        AlertUtils.error("网络错误", "检查更新发生错误，请稍后再试。", this.primaryStage);
+                    }
+                    return null;
                 });
     }
 

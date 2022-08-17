@@ -8,17 +8,17 @@
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
+        <star.movie.version>1.2.4-SNAPSHOT</star.movie.version>
     </properties>
 
     <groupId>top.tonydon</groupId>
     <artifactId>star-movie</artifactId>
-    <version>1.2.3-SNAPSHOT</version>
+    <version>1.2.4-SNAPSHOT</version>
 
     <modules>
         <module>movie-client</module>
         <module>movie-server</module>
         <module>movie-common</module>
-        <module>websocket-client</module>
     </modules>
 
     <dependencyManagement>
@@ -30,17 +30,11 @@
                 <version>1.5.4-SNAPSHOT</version>
             </dependency>
 
-            <!-- 客户端模块 -->
-            <dependency>
-                <groupId>top.tonydon</groupId>
-                <artifactId>star-movie-client</artifactId>
-                <version>1.2.2-SNAPSHOT</version>
-            </dependency>
-
+            <!-- Star Movie Common-->
             <dependency>
                 <groupId>top.tonydon</groupId>
                 <artifactId>star-movie-common</artifactId>
-                <version>1.2.2-SNAPSHOT</version>
+                <version>${star.movie.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
