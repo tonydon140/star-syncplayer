@@ -4,7 +4,7 @@
 
 ### 如何使用
 
-解压 StarMovie.zip 压缩包，在 bin 目录中运行【星星电影院.exe】即可。
+解压 StarMovie.zip 压缩包，直接运行【StarMovie.exe】即可。
 
 客户端的功能：
 
