@@ -4,22 +4,23 @@ public class ClientConstants {
     public static final String EXAMPLE_URL = "ws://www.example.com:8888/websocket";
 
     public static final String DEFAULT_URL = "ws://123.57.92.83:1165/websocket";
+//    public static final String DEFAULT_URL = "ws://localhost:1165/websocket";
 
-    public static final String CHECK_UPDATE_URL = "http://tonydon.top:6515/admin/project/version/latest/1";
+    public static final String CHECK_UPDATE_URL = "https://tonydon.top:6515/admin/project/version/latest/1";
 
     public static final String LATEST_URL = "https://gitee.com/shuilanjiao/star-movie/releases";
 
-    public static final String ABOUT_URL = "http://www.tonydon.top/article/8";
+    public static final String ABOUT_URL = "https://www.tonydon.top/article/8";
 
     public static final String LOCAL_URL = "ws://localhost:1165/websocket";
 
     public static final String URL_REG = "^ws://[\\S]+";
 
-    public static final String VERSION = "v1.2.5";
+    public static final String VERSION = "v1.2.6";
 
     public static final String TITLE = "星星电影院 " + VERSION;
 
-    public static final int VERSION_NUMBER = 9;
+    public static final int VERSION_NUMBER = 10;
 
     public static final double MOVIE_HEIGHT = 540;
 

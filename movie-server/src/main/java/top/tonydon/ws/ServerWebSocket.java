@@ -1,5 +1,7 @@
 package top.tonydon.ws;
 
+import jakarta.websocket.*;
+import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import top.tonydon.message.JsonMessage;
@@ -13,9 +15,10 @@ import top.tonydon.message.server.ServerResponseMessage;
 import top.tonydon.util.RandomUtils;
 import top.tonydon.util.WebSocketGroup;
 
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
+//import javax.websocket.*;
+//import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -127,7 +130,7 @@ public class ServerWebSocket {
         WebSocketGroup group = map.get(number);
 
         // 解除绑定
-        if (code == ActionCode.UNBIND){
+        if (code == ActionCode.UNBIND) {
             // 删除对方组中的自己
             map.get(group.getTarget().number).setTarget(null);
             // 删除自己组中的对方
@@ -231,8 +234,17 @@ public class ServerWebSocket {
         return map.size();
     }
 
-    public static Map<String, WebSocketGroup> getMap() {
-        return map;
+    public static Map<String, String> getMap() {
+        Map<String, String> group = new HashMap<>();
+        for (String key : map.keySet()) {
+            ServerWebSocket target = map.get(key).getTarget();
+            if (target == null) {
+                group.put(key, null);
+            } else {
+                group.put(key, target.number);
+            }
+        }
+        return group;
     }
 
     public Session getSession() {
