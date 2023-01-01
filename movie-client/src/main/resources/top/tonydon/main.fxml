@@ -7,8 +7,10 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.media.MediaView?>
 <?import javafx.scene.text.Font?>
-<AnchorPane fx:id="root" prefHeight="600" stylesheets="@movie-client.css" xmlns="http://javafx.com/javafx/18"
-            xmlns:fx="http://javafx.com/fxml/1" fx:controller="top.tonydon.ClientController">
+<AnchorPane fx:id="root" prefHeight="600" stylesheets="@main.css"
+            xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="top.tonydon.ClientController">
     <!--  菜单栏 -->
     <MenuBar fx:id="menuBar" prefHeight="25.0" prefWidth="1140.0">
         <Menu text="帮助">

@@ -19,7 +19,7 @@ public class ClientApplication extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         // 1. 加载 FXML
-        FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("movie-client.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(ClientApplication.class.getResource("main.fxml"));
         Parent parent = fxmlLoader.load();
 
         // 2. 加载窗口
