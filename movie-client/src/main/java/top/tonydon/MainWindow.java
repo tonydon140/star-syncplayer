@@ -191,6 +191,7 @@ public class MainWindow {
         this.hostServices = application.getHostServices();
         // 连接服务器
         connectServer();
+        volumeSlider.requestFocus();
 
         // 获取主屏幕尺寸
         Rectangle2D bounds = Screen.getPrimary().getBounds();
