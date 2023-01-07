@@ -140,43 +140,46 @@ public class MainWindow {
 
 
     private void setListener() {
-        root.widthProperty().addListener((observable, oldValue, newValue) -> {
-            double width = newValue.doubleValue();
-            // 如果不是全屏，做变换
-            if (!primaryStage.isFullScreen()) {
-                double needHeight = width / 16 * 9;
-                double currentHeight = root.getHeight() - 86;
-                if (currentHeight >= needHeight) {
-                    mediaView.setFitHeight(needHeight);
-                    mediaView.setFitWidth(width);
-                } else {
-                    double currentWidth = currentHeight / 9 * 16;
-                    mediaView.setFitHeight(currentHeight);
-                    mediaView.setFitWidth(currentWidth);
-                }
+        root.widthProperty().addListener((observable, oldValue, newValue) -> updateWidth(newValue.doubleValue()));
+        root.heightProperty().addListener((observable, oldValue, newValue) -> updateHeight(newValue.doubleValue()));
+    }
+
+    private void updateWidth(double width) {
+        // 如果不是全屏，做变换
+        if (!primaryStage.isFullScreen()) {
+            double needHeight = width / 16 * 9;
+            double currentHeight = root.getHeight() - 86;
+            if (currentHeight >= needHeight) {
+                mediaView.setFitHeight(needHeight);
+                mediaView.setFitWidth(width);
+            } else {
+                double currentWidth = currentHeight / 9 * 16;
+                mediaView.setFitHeight(currentHeight);
+                mediaView.setFitWidth(currentWidth);
             }
-            // 菜单栏同步变化
-            menuBar.setPrefWidth(width);
-            // 控制栏同步变化
-            controlBox.setPrefWidth(width);
-            videoPane.setPrefWidth(width);
-        });
-        root.heightProperty().addListener((observable, oldValue, newValue) -> {
-            double height = newValue.doubleValue() - 86;
-            if (!primaryStage.isFullScreen()) {
-                double needWidth = height / 9 * 16;
-                double currentWidth = root.getWidth();
-                if (currentWidth >= needWidth) {
-                    mediaView.setFitHeight(height);
-                    mediaView.setFitWidth(needWidth);
-                } else {
-                    double currentHeight = currentWidth / 16 * 9;
-                    mediaView.setFitHeight(currentHeight);
-                    mediaView.setFitWidth(currentWidth);
-                }
+        }
+        // 菜单栏同步变化
+        menuBar.setPrefWidth(width);
+        // 控制栏同步变化
+        controlBox.setPrefWidth(width);
+        videoPane.setPrefWidth(width);
+    }
+
+    private void updateHeight(double height) {
+        height = height - 86;
+        if (!primaryStage.isFullScreen()) {
+            double needWidth = height / 9 * 16;
+            double currentWidth = root.getWidth();
+            if (currentWidth >= needWidth) {
+                mediaView.setFitHeight(height);
+                mediaView.setFitWidth(needWidth);
+            } else {
+                double currentHeight = currentWidth / 16 * 9;
+                mediaView.setFitHeight(currentHeight);
+                mediaView.setFitWidth(currentWidth);
             }
-            videoPane.setPrefHeight(height);
-        });
+        }
+        videoPane.setPrefHeight(height);
     }
 
     public void init(Application application) {
@@ -208,8 +211,12 @@ public class MainWindow {
                 controlBox.setVisible(true);
                 // 恢复鼠标
                 primaryScene.setCursor(Cursor.DEFAULT);
+                // 恢复尺寸
+                updateWidth(root.getWidth());
+                updateHeight(root.getHeight());
             }
         });
+
 
         // 启动任务
         countTask.start();
@@ -847,9 +854,12 @@ public class MainWindow {
         text.setY((new Random().nextInt(4) + 1) * textHeight);
         root.getChildren().add(text);
 
-        // todo 弹幕位置
+        double width = mediaView.getFitWidth();
+        double layoutX = mediaView.getLayoutX();
+//        log.debug("width = {}, layoutX = {}", width, layoutX);
+
         // 创建动画
-        double startX = isFullScreen ? screen.getBounds().getWidth() : 960 - textWidth;
+        double startX = isFullScreen ? screen.getBounds().getWidth() : width + layoutX - textWidth;
         Duration time = isFullScreen ? Duration.seconds(10) : Duration.seconds(6);
         KeyFrame kf1 = new KeyFrame(
                 Duration.ZERO,
