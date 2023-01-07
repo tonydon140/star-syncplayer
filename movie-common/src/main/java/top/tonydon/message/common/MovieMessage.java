@@ -1,5 +1,6 @@
 package top.tonydon.message.common;
 
+import top.tonydon.message.ActionCode;
 import top.tonydon.message.Message;
 import top.tonydon.message.MessageType;
 
@@ -11,6 +12,10 @@ import top.tonydon.message.MessageType;
  * rate: 当前视频的部分速度
  */
 public class MovieMessage extends Message {
+
+    public static final MovieMessage MOVIE_PLAY = new MovieMessage(ActionCode.MOVIE_PLAY);
+    public static final MovieMessage MOVIE_PAUSE = new MovieMessage(ActionCode.MOVIE_PAUSE);
+    public static final MovieMessage MOVIE_STOP = new MovieMessage(ActionCode.MOVIE_STOP);
 
     private int actionCode;
 

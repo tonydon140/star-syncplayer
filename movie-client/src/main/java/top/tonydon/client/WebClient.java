@@ -12,6 +12,7 @@ import top.tonydon.message.common.BulletScreenMessage;
 import top.tonydon.message.common.MovieMessage;
 import top.tonydon.message.common.Notification;
 import top.tonydon.message.server.ServerConnectMessage;
+import top.tonydon.message.server.ServerResponseMessage;
 import top.tonydon.util.observer.ClientObserver;
 import top.tonydon.message.MessageType;
 import top.tonydon.util.observer.Observable;
@@ -96,6 +97,13 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
             BulletScreenMessage bulletScreenMessage = (BulletScreenMessage) message;
             observerSet.forEach(clientObserver -> clientObserver.onBulletScreen(bulletScreenMessage));
         }
+
+        // 服务器响应
+        else if (message.getType() == MessageType.SERVER_RESPONSE) {
+            ServerResponseMessage responseMessage = (ServerResponseMessage) message;
+            observerSet.forEach(clientObserver -> clientObserver.onServerMessage(responseMessage));
+        }
+
     }
 
     @Override

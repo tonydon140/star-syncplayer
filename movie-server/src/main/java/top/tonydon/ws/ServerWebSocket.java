@@ -4,9 +4,9 @@ import jakarta.websocket.*;
 import jakarta.websocket.server.ServerEndpoint;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import top.tonydon.message.ActionCode;
 import top.tonydon.message.JsonMessage;
 import top.tonydon.message.Message;
-import top.tonydon.message.ActionCode;
 import top.tonydon.message.MessageType;
 import top.tonydon.message.common.BindMessage;
 import top.tonydon.message.common.Notification;
@@ -15,8 +15,6 @@ import top.tonydon.message.server.ServerResponseMessage;
 import top.tonydon.util.RandomUtils;
 import top.tonydon.util.WebSocketGroup;
 
-//import javax.websocket.*;
-//import javax.websocket.server.ServerEndpoint;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -131,13 +129,12 @@ public class ServerWebSocket {
 
         // 解除绑定
         if (code == ActionCode.UNBIND) {
+            // 向对方发送解除绑定数据
+            group.sendTarget(message);
             // 删除对方组中的自己
             map.get(group.getTarget().number).setTarget(null);
             // 删除自己组中的对方
             group.setTarget(null);
-            // 写回解除绑定数据
-            sendMessage(message);
-            group.sendTarget(message);
         }
     }
 

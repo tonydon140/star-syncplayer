@@ -1,5 +1,9 @@
 .idea
 */target
-*.log
+movie-client/src/test
+movie-common/src/test
+movie-server/src/test
 movie-server/src/main/java/top/tonydon/controller
+logs
+*.log
 

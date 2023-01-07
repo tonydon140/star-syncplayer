@@ -172,9 +172,10 @@ public abstract class Draft {
       throw new InvalidHandshakeException(String
           .format("Invalid status line received: %s Status line: %s", firstLineTokens[0], line));
     }
-    ServerHandshakeBuilder handshake = new HandshakeImpl1Server();
-    handshake.setHttpStatus(Short.parseShort(firstLineTokens[1]));
-    handshake.setHttpStatusMessage(firstLineTokens[2]);
+    HandshakeBuilder handshake = new HandshakeImpl1Server();
+    ServerHandshakeBuilder serverhandshake = (ServerHandshakeBuilder) handshake;
+    serverhandshake.setHttpStatus(Short.parseShort(firstLineTokens[1]));
+    serverhandshake.setHttpStatusMessage(firstLineTokens[2]);
     return handshake;
   }
 
@@ -330,7 +331,7 @@ public abstract class Draft {
     if (vers.length() > 0) {
       int v;
       try {
-        v = Integer.parseInt(vers.trim());
+        v = new Integer(vers.trim());
         return v;
       } catch (NumberFormatException e) {
         return -1;

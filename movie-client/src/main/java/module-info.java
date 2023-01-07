@@ -1,5 +1,4 @@
 module top.tonydon {
-    requires javafx.fxml;
     requires javafx.media;
     requires javafx.controls;
     requires javafx.graphics;
@@ -12,7 +11,7 @@ module top.tonydon {
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;
 
-    opens top.tonydon to javafx.fxml, javafx.graphics;
+    opens top.tonydon to javafx.graphics;
 
     exports top.tonydon.entity to com.fasterxml.jackson.databind;
     exports top.tonydon;

@@ -5,6 +5,7 @@ import top.tonydon.message.common.BindMessage;
 import top.tonydon.message.common.BulletScreenMessage;
 import top.tonydon.message.common.MovieMessage;
 import top.tonydon.message.server.ServerConnectMessage;
+import top.tonydon.message.server.ServerResponseMessage;
 
 public interface ClientObserver {
     void onConnected(ServerConnectMessage message);
@@ -18,4 +19,6 @@ public interface ClientObserver {
     void onOffline();
 
     void onBulletScreen(BulletScreenMessage message);
+
+    void onServerMessage(ServerResponseMessage responseMessage);
 }
