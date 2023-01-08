@@ -587,6 +587,11 @@ public class MainWindow {
                     @Override
                     public void onMovie(MovieMessage message) {
                         MediaPlayer player = mediaView.getMediaPlayer();
+                        // 如果视频没有加载，则不做处理
+                        if (player == null){
+                            log.info("视频尚未加载！");
+                            return;
+                        }
                         if (message.getActionCode() == ActionCode.MOVIE_PLAY) {
                             player.play();
                             playImage.setImage(PAUSE_BLUE_ICON);
@@ -685,6 +690,11 @@ public class MainWindow {
             volumeSlider.setDisable(false);
             rateSpinner.setDisable(false);
             bulletScreenInput.setDisable(false);
+            if(isBind()){
+                syncPane.setDisable(false);
+                syncPane.setOpacity(1);
+                syncImage.setImage(SYNC_BLUE_ICON);
+            }
         } else if (code == UI.CLOSE_VIDEO) {
             playPane.setDisable(true);
             playPane.setOpacity(0.6);
@@ -692,6 +702,10 @@ public class MainWindow {
             volumeSlider.setDisable(true);
             rateSpinner.setDisable(true);
             bulletScreenInput.setDisable(true);
+            // 禁止同步图标
+            syncPane.setDisable(true);
+            syncPane.setOpacity(0.6);
+            syncImage.setImage(SYNC_BLACK_ICON);
         }
     }
 

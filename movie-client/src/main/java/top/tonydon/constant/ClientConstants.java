@@ -16,9 +16,9 @@ public class ClientConstants {
 
     public static final String URL_REG = "^ws://[\\S]+";
 
-    public static final String VERSION = "v1.3.0";
+    public static final String VERSION = "v1.3.1";
 
-    public static final int VERSION_NUMBER = 11;
+    public static final int VERSION_NUMBER = 12;
 
     public static final String TITLE = "星星电影院 " + VERSION;
 
