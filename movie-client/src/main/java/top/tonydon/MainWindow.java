@@ -180,6 +180,7 @@ public class MainWindow {
         videoPane.setPrefHeight(height);
     }
 
+    // todo 添加服务器相关的配置，包括自定义服务器、断开服务器连接
     public void init(Application application) {
         // 获得主场景
         this.primaryScene = root.getScene();

@@ -106,26 +106,26 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--            <plugin>-->
-            <!--                <groupId>org.openjfx</groupId>-->
-            <!--                <artifactId>javafx-maven-plugin</artifactId>-->
-            <!--                <version>0.0.8</version>-->
-            <!--                <executions>-->
-            <!--                    <execution>-->
-            <!--                        &lt;!&ndash; Default configuration for running with: mvn clean javafx:run &ndash;&gt;-->
-            <!--                        <id>default-cli</id>-->
-            <!--                        <configuration>-->
-            <!--                            <mainClass>top.tonydon.AppMain</mainClass>-->
-            <!--                            <launcher>StarMovie</launcher>-->
-            <!--                            <jlinkZipName>StarMovie</jlinkZipName>-->
-            <!--                            <jlinkImageName>StarMovie</jlinkImageName>-->
-            <!--                            <noManPages>true</noManPages>-->
-            <!--                            <stripDebug>true</stripDebug>-->
-            <!--                            <noHeaderFiles>true</noHeaderFiles>-->
-            <!--                        </configuration>-->
-            <!--                    </execution>-->
-            <!--                </executions>-->
-            <!--            </plugin>-->
+<!--            <plugin>-->
+<!--                <groupId>org.openjfx</groupId>-->
+<!--                <artifactId>javafx-maven-plugin</artifactId>-->
+<!--                <version>0.0.8</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        &lt;!&ndash; Default configuration for running with: mvn clean javafx:run &ndash;&gt;-->
+<!--                        <id>default-cli</id>-->
+<!--                        <configuration>-->
+<!--                            <mainClass>top.tonydon.MainApplication</mainClass>-->
+<!--                            <launcher>StarMovie</launcher>-->
+<!--                            <jlinkZipName>StarMovie</jlinkZipName>-->
+<!--                            <jlinkImageName>StarMovie</jlinkImageName>-->
+<!--                            <noManPages>true</noManPages>-->
+<!--                            <stripDebug>true</stripDebug>-->
+<!--                            <noHeaderFiles>true</noHeaderFiles>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
         </plugins>
     </build>
 </project>

@@ -4,7 +4,7 @@
     <property name="pattern.console"
               value="%d{yyyy-MM-dd HH:mm:ss.SSS} %yellow(%5level) --- [%20.20thread] %cyan(%-30.30logger{30}) : %m%n"/>
     <property name="pattern.file"
-              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5level --- [%20.20thread] [%30logger{30}] : %m%n"/>
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %5level --- [%20.20thread] [%-30.30logger{30}] : %m%n"/>
     <property name="max.file.size" value="2MB"/>
     <property name="max.history" value="14"/>
 

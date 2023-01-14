@@ -33,7 +33,7 @@
 | ---------------- | ------------------------------------------------------------ |
 | movie-client     | 使用 JavaFX 和 Java-WebSocket 实现的客户端播放器             |
 | movie-common     | client 和 server 之间使用的消息实体类                        |
-| movie-server     | 基于 SpringBoot 的 WebSocket 服务端                          |
+| movie-server     | 基于 SpringBoot 的 WebSocket 服务端示例。<br>想自建服务器的朋友可以参考这个模块进行实现。 |
 | websocket-client | 模块化的 WebSocket 的客户端实现。基于 [Java-Websocket](https://github.com/TooTallNate/Java-WebSocket) |
 
 
