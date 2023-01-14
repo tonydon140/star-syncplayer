@@ -15,7 +15,6 @@ module top.tonydon {
 
     exports top.tonydon.entity to com.fasterxml.jackson.databind;
     exports top.tonydon;
-    exports top.tonydon.client;
     exports top.tonydon.util;
     exports top.tonydon.util.observer;
 }

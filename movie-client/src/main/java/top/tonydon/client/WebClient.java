@@ -22,7 +22,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class WebClient extends WebSocketClient implements Observable<ClientObserver> {
-    private final Logger log = LoggerFactory.getLogger(WebClient.class);
+    private static final Logger log = LoggerFactory.getLogger(WebClient.class);
     private final Set<ClientObserver> observerSet = new HashSet<>();
 
     /**
@@ -58,13 +58,14 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
     public void onMessage(String json) {
         // 1. 转换 json 到对象
         Message message = JsonMessage.parse(json);
-        log.info("JsonMessage --- {}", json);
+        log.debug(json);
 
         // 2. 对不同的消息执行不同的处理
         if (message.getType() == MessageType.SERVER_CONNECT) {
             // 设置星星码
             ServerConnectMessage serverConnectMessage = (ServerConnectMessage) message;
             this.selfNumber = serverConnectMessage.getNumber();
+            log.info("星星号：{}", selfNumber);
             // 遍历观察者
             observerSet.forEach(observer -> observer.onConnected(serverConnectMessage));
         }

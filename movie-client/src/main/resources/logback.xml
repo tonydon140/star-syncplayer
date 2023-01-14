@@ -1,42 +1,140 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <configuration>
-    <property name="pattern" value="%d{yyyy-MM-dd HH:mm:ss.SSS}  %5level  [%thread{30}] [%-40c] : %m%n" />
+    <property name="pattern.console"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} %yellow(%5level) --- [%30thread{30}] %cyan([%30logger{30}]) : %m%n"/>
+    <property name="pattern.file"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS}  %5level --- [%30thread{30}] [%30logger{30}] : %m%n"/>
+    <property name="max.file.size" value="2MB"/>
+    <property name="max.history" value="14"/>
 
+
+    <!-- 输出至控制台 -->
     <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-            <pattern>
-                %d{yyyy-MM-dd HH:mm:ss.SSS} %yellow(%5level) --- [%29.32thread] %cyan(%logger{40}) : %m%n
-            </pattern>
+            <pattern>${pattern.console}</pattern>
             <charset>UTF-8</charset>
         </encoder>
     </appender>
 
-
-    <!--输出错误日志-->
-    <appender name="DEBUG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <!-- 输出错误DEBUG日志 -->
+    <appender name="debug" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- 日志名称的格式 -->
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %yellow(%5level) --- [%29.32thread] %cyan(%logger{40}) : %m%n</pattern>
+            <pattern>${pattern.file}</pattern>
             <charset>UTF-8</charset>
         </encoder>
         <file>logs/debug.log</file>
         <!-- 配置滚动的策略 -->
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/%d{yyyy-MM-dd}.debug.log</fileNamePattern>
+            <fileNamePattern>logs/debug.%d{yyyy-MM-dd}.log</fileNamePattern>
             <!-- 保存的最长时间：天数 -->
-            <maxHistory>7</maxHistory>
+            <maxHistory>${max.history}</maxHistory>
         </rollingPolicy>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>${max.file.size}</MaxFileSize>
+        </triggeringPolicy>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 过滤的级别 -->
             <level>DEBUG</level>
+            <!-- 匹配时的操作：接收（记录） -->
             <onMatch>ACCEPT</onMatch>
+            <!-- 不匹配时的操作：拒绝（不记录） -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 输出INFO日志 -->
+    <appender name="info" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 日志名称的格式 -->
+        <encoder>
+            <pattern>${pattern.file}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <file>logs/info.log</file>
+        <!-- 配置滚动的策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 保存的最长时间：天数 -->
+            <maxHistory>${max.history}</maxHistory>
+        </rollingPolicy>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>${max.file.size}</MaxFileSize>
+        </triggeringPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 过滤的级别 -->
+            <level>INFO</level>
+            <!-- 匹配时的操作：接收（记录） -->
+            <onMatch>ACCEPT</onMatch>
+            <!-- 不匹配时的操作：拒绝（不记录） -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 输出WARN日志 -->
+    <appender name="warn" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 日志名称的格式 -->
+        <encoder>
+            <pattern>${pattern.file}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <file>logs/warn.log</file>
+        <!-- 配置滚动的策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/warn.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 保存的最长时间：天数 -->
+            <maxHistory>${max.history}</maxHistory>
+        </rollingPolicy>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>${max.file.size}</MaxFileSize>
+        </triggeringPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 过滤的级别 -->
+            <level>WARN</level>
+            <!-- 匹配时的操作：接收（记录） -->
+            <onMatch>ACCEPT</onMatch>
+            <!-- 不匹配时的操作：拒绝（不记录） -->
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 输出ERROR日志 -->
+    <appender name="error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- 日志名称的格式 -->
+        <encoder>
+            <pattern>${pattern.file}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+        <file>logs/error.log</file>
+        <!-- 配置滚动的策略 -->
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!-- 保存的最长时间：天数 -->
+            <maxHistory>${max.history}</maxHistory>
+        </rollingPolicy>
+        <!--日志文件最大的大小-->
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+            <MaxFileSize>${max.file.size}</MaxFileSize>
+        </triggeringPolicy>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <!-- 过滤的级别 -->
+            <level>ERROR</level>
+            <!-- 匹配时的操作：接收（记录） -->
+            <onMatch>ACCEPT</onMatch>
+            <!-- 不匹配时的操作：拒绝（不记录） -->
             <onMismatch>DENY</onMismatch>
         </filter>
     </appender>
 
     <root level="debug">
         <appender-ref ref="console"/>
-        <appender-ref ref="DEBUG"/>
+        <appender-ref ref="debug"/>
+        <appender-ref ref="info"/>
+        <appender-ref ref="warn"/>
+        <appender-ref ref="error"/>
     </root>
 </configuration>

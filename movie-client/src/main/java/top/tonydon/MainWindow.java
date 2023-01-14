@@ -50,9 +50,9 @@ import top.tonydon.message.server.ServerConnectMessage;
 import top.tonydon.message.server.ServerResponseMessage;
 import top.tonydon.task.CountTask;
 import top.tonydon.util.AlertUtils;
+import top.tonydon.util.DurationUtils;
 import top.tonydon.util.JSONUtils;
 import top.tonydon.util.URIUtils;
-import top.tonydon.util.VideoDuration;
 import top.tonydon.util.observer.ClientObserver;
 
 import java.io.File;
@@ -90,7 +90,6 @@ public class MainWindow {
     private WebClient client;
     private final Robot robot;
     private final CountTask countTask;
-    private final VideoDuration videoDuration;
 
     private MenuBar menuBar;
     private AnchorPane root;
@@ -120,7 +119,6 @@ public class MainWindow {
 
     public MainWindow(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        this.videoDuration = new VideoDuration();
         this.robot = new Robot();
         this.countTask = new CountTask(TimeUnit.SECONDS, 1);
 
@@ -325,8 +323,7 @@ public class MainWindow {
             mouse = false;
             Duration duration = Duration.seconds(videoSlider.getValue());
             mediaView.getMediaPlayer().seek(duration);
-            videoDuration.setCurrentDuration(duration);
-            timeLabel.setText(videoDuration.toString());
+            timeLabel.setText(DurationUtils.getText(duration));
         });
     }
 
@@ -588,7 +585,7 @@ public class MainWindow {
                     public void onMovie(MovieMessage message) {
                         MediaPlayer player = mediaView.getMediaPlayer();
                         // 如果视频没有加载，则不做处理
-                        if (player == null){
+                        if (player == null) {
                             log.info("视频尚未加载！");
                             return;
                         }
@@ -606,6 +603,7 @@ public class MainWindow {
                             player.setRate(message.getRate());
                             player.play();
                             playImage.setImage(PAUSE_BLUE_ICON);
+                            log.info("同步播放 -- 进度：{}，倍速：{}", DurationUtils.getText(message.getSeconds()), message.getRate());
                         }
                     }
 
@@ -634,6 +632,7 @@ public class MainWindow {
                             // 转移焦点
                             volumeSlider.requestFocus();
                         });
+                        log.info("与 {} 绑定成功！", message.getTargetNumber());
                     }
 
                     @Override
@@ -642,12 +641,18 @@ public class MainWindow {
                         client.setBind(false);
                         // 更新 UI
                         Platform.runLater(() -> flushUI(UI.UN_BIND));
-                        AlertUtils.information("另一半断开连接！", "", primaryStage);
+                        AlertUtils.information("另一半解除绑定！", "", primaryStage);
+                        log.info("与另一半解除绑定！");
                     }
 
                     @Override
                     public void onOffline() {
-                        onUnbind();
+                        // 解除绑定
+                        client.setBind(false);
+                        // 更新 UI
+                        Platform.runLater(() -> flushUI(UI.UN_BIND));
+                        AlertUtils.information("另一半断开连接！", "", primaryStage);
+                        log.info("与另一半解除绑定！");
                     }
 
                     @Override
@@ -690,7 +695,7 @@ public class MainWindow {
             volumeSlider.setDisable(false);
             rateSpinner.setDisable(false);
             bulletScreenInput.setDisable(false);
-            if(isBind()){
+            if (isBind()) {
                 syncPane.setDisable(false);
                 syncPane.setOpacity(1);
                 syncImage.setImage(SYNC_BLUE_ICON);
@@ -774,7 +779,7 @@ public class MainWindow {
         if (mediaView.getMediaPlayer() != null) {
             mediaView.getMediaPlayer().dispose();
             flushUI(UI.CLOSE_VIDEO);
-            log.debug("视频销毁成功");
+            log.info("视频销毁成功");
         }
 
         // 将文件转为 uri 路径，加载媒体视频
@@ -790,6 +795,7 @@ public class MainWindow {
         count++;
         if (count >= 4) {
             AlertUtils.warning("视频加载开了会小差，再试一次吧。", "", primaryStage);
+            log.error("视频加载三次失败！");
             return;
         }
 
@@ -819,8 +825,7 @@ public class MainWindow {
                 mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
                     if (!mouse) {
                         videoSlider.setValue(newValue.toSeconds());
-                        videoDuration.setCurrentDuration(newValue);
-                        timeLabel.setText(videoDuration.toString());
+                        timeLabel.setText(DurationUtils.getText(newValue));
 
                         // 当播放结束时暂停
                         double temp = totalDuration.toMillis() - newValue.toMillis();
@@ -839,13 +844,13 @@ public class MainWindow {
                 mediaView.setOnMouseClicked(e2 -> playOrPause(null));
 
                 // 设置进度显示
-                videoDuration.setTotalDuration(totalDuration);
-                timeLabel.setText(videoDuration.toString());
+                DurationUtils.setTotal(totalDuration);
+                timeLabel.setText(DurationUtils.getText(0));
 
                 // 设置是否静音
                 mediaPlayer.setMute(isMute);
 
-                log.debug("视频加载成功");
+                log.info("视频加载成功");
             });
 
             mediaPlayer.setOnError(() -> {
@@ -899,7 +904,7 @@ public class MainWindow {
         if (client != null) {
             try {
                 client.closeBlocking();
-                log.debug("关闭服务器连接");
+                log.info("关闭服务器连接");
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -907,12 +912,12 @@ public class MainWindow {
         // 销毁媒体
         if (mediaView.getMediaPlayer() != null) {
             mediaView.getMediaPlayer().dispose();
-            log.debug("销毁视频");
+            log.info("销毁视频");
         }
         // 关闭任务
         countTask.stop();
         log.debug("结束计时任务");
-        log.debug("客户端关闭");
+        log.info("客户端关闭");
     }
 
     // 检查更新
