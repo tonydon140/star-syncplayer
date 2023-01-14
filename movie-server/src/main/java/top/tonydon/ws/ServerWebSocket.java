@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 // 接受 websocket 请求路径
-@ServerEndpoint(value = "/websocket")
+@ServerEndpoint(value = "/movie")
 // 注册到 spring 容器中
 @Component
 public class ServerWebSocket {
@@ -92,7 +92,7 @@ public class ServerWebSocket {
         else if (message.getType() == MessageType.NOTIFICATION) doNotification(message);
             // 弹幕消息
         else if (message.getType() == MessageType.BULLET_SCREEN) doBulletScreen(message);
-        log.info("{} --- {}", number, json);
+        log.debug("{} --- {}", number, json);
     }
 
 

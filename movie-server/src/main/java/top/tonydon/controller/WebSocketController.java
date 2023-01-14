@@ -12,7 +12,7 @@ import top.tonydon.ws.ServerWebSocket;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/ws")
+@RequestMapping("/star-movie")
 public class WebSocketController {
     @Resource
     private StringRedisTemplate stringRedisTemplate;

@@ -9,3 +9,4 @@ public class ServerApplication {
         SpringApplication.run(ServerApplication.class, args);
     }
 }
+// todo 写入数据库操作

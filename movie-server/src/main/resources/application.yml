@@ -1,15 +1,21 @@
 spring:
-  profiles:
-    active: dev
+  data:
+    redis:
+      host: 192.168.88.139
+      password: 123321
 
 server:
-  port: 1165
+  port: 6515
 
 logging:
+  pattern:
+    dateformat: yyyy-MM-dd HH:mm:ss.SSS
+    console:
   file:
     name: temp.log
   logback:
     rollingpolicy:
-      max-history: 7
-      max-file-size: 256KB
+      max-history: 14
+      max-file-size: 2MB
       file-name-pattern: server.%d{yyyy-MM-dd}.%i.log
+

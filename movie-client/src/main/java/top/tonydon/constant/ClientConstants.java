@@ -3,7 +3,8 @@ package top.tonydon.constant;
 public class ClientConstants {
     public static final String EXAMPLE_URL = "ws://www.example.com:8888/websocket";
 
-    public static final String DEFAULT_URL = "ws://123.57.92.83:1165/websocket";
+//    public static final String DEFAULT_URL = "ws://123.57.92.83:1165/websocket";
+    public static final String DEFAULT_URL = "wss://www.tonydon.top:6515/movie";
 //    public static final String DEFAULT_URL = "ws://localhost:1165/websocket";
 
     public static final String CHECK_UPDATE_URL = "https://tonydon.top:6515/project-version/latest/1";
@@ -16,9 +17,9 @@ public class ClientConstants {
 
     public static final String URL_REG = "^ws://[\\S]+";
 
-    public static final String VERSION = "v1.3.1";
+    public static final String VERSION = "v1.3.2";
 
-    public static final int VERSION_NUMBER = 12;
+    public static final int VERSION_NUMBER = 13;
 
     public static final String TITLE = "星星电影院 " + VERSION;
 
