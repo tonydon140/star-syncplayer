@@ -1,10 +1,11 @@
 .idea
 */target
-movie-client/src/test
-movie-common/src/test
-movie-server/src/test
-movie-server/src/main/java/top/tonydon/controller
-movie-server/src/main/resources/application-*.yml
+
+star-syncplayer/src/test
+star-syncplayer-common/src/test
+star-syncplayer-server/src/test
+star-syncplayer-server/src/main/java/top/tonydon/controller
+
 logs
 *.log
 
