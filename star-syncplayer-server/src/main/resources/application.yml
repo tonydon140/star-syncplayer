@@ -1,9 +1,3 @@
-spring:
-  data:
-    redis:
-      host: 192.168.88.139
-      password: 123321
-
 server:
   port: 6515
 
@@ -11,10 +5,9 @@ logging:
   pattern:
     dateformat: yyyy-MM-dd HH:mm:ss.SSS
   file:
-    name: temp.log
+    name: logs/server.temp.log
   logback:
     rollingpolicy:
       max-history: 14
       max-file-size: 2MB
-      file-name-pattern: server.%d{yyyy-MM-dd}.%i.log
-
+      file-name-pattern: logs/server.%d{yyyy-MM-dd}.%i.log

@@ -1,11 +1,7 @@
 .idea
+logs
 */target
 
 star-syncplayer/src/test
 star-syncplayer-common/src/test
 star-syncplayer-server/src/test
-star-syncplayer-server/src/main/java/top/tonydon/controller
-
-logs
-*.log
-
