@@ -292,6 +292,7 @@ public class MainWindow {
         connectDefaultServerItem.setOnAction(event -> connectServer());
         connectCustomServerItem.setOnAction(event -> {
             // todo
+            connectCustomServer();
         });
 
 
@@ -450,7 +451,7 @@ public class MainWindow {
                 String number = friendInput.getText();
                 // 校验星星号
                 if (number.length() != ClientConstants.ID_LENGTH) {
-                    AlertUtils.error("星星号必须是6位数字", "", primaryStage);
+                    AlertUtils.error("星星号必须是6位数字", primaryStage);
                     return;
                 }
                 client.send(StringMessage.BIND.setContent(number).toJson());
@@ -614,7 +615,7 @@ public class MainWindow {
                 // 连接失败
                 if (!flag) {
                     client = null;
-                    AlertUtils.error("服务器连接失败！请检查更新或联系作者！", "", this.primaryStage);
+                    AlertUtils.error("服务器连接失败！请检查更新或联系作者！", this.primaryStage);
                     log.error("server connection fail!");
                     return;
                 }
@@ -645,6 +646,34 @@ public class MainWindow {
         }, "ConnectServerThread").start();
     }
 
+    private void connectCustomServer() {
+        // 1. 创建对话框
+        TextInputDialog inputDialog = new TextInputDialog();
+        inputDialog.getEditor().setText(ClientConstants.EXAMPLE_URL);
+        inputDialog.setTitle("连接服务器");
+        inputDialog.setHeaderText("输入服务器地址，例如：" + ClientConstants.EXAMPLE_URL);
+        inputDialog.setContentText("输入服务器地址：");
+
+        // 2. 设置主窗口
+        inputDialog.initModality(Modality.WINDOW_MODAL);
+        inputDialog.initOwner(primaryStage);
+
+
+        // 3. 显示窗口
+        Optional<String> result = inputDialog.showAndWait();
+
+        // 4. 点击确定后发送消息
+        if (result.isEmpty()) return;
+
+        // 判断地址是否正确
+        String url = result.get();
+        log.info("url = {}", url);
+        if (!url.matches(ClientConstants.URL_REG)) {
+            AlertUtils.error("地址格式不正确！", primaryStage);
+            return;
+        }
+    }
+
     // 处理 ActionMessage
     private void doAction(int code) {
         // 另一半下线
@@ -653,14 +682,14 @@ public class MainWindow {
             isBind = false;
             // 更新 UI
             Platform.runLater(() -> flushUI(UI.UN_BIND));
-            AlertUtils.information("另一半断开连接！", "", primaryStage);
+            AlertUtils.information("另一半断开连接！", primaryStage);
             log.info("与另一半解除绑定！");
         } else if (code == ActionCode.UNBIND) {
             // 解除绑定
             isBind = false;
             // 更新 UI
             Platform.runLater(() -> flushUI(UI.UN_BIND));
-            AlertUtils.information("另一半解除绑定！", "", primaryStage);
+            AlertUtils.information("另一半解除绑定！", primaryStage);
             log.info("与另一半解除绑定！");
         }
     }
@@ -710,7 +739,7 @@ public class MainWindow {
 
         // 服务器消息
         else if (code == ActionCode.SERVER_RESPONSE) {
-            Platform.runLater(() -> AlertUtils.error(content, "", primaryStage));
+            Platform.runLater(() -> AlertUtils.error(content, primaryStage));
         }
     }
 
@@ -884,7 +913,7 @@ public class MainWindow {
         // 重复次数，最多重复3次
         count++;
         if (count >= 4) {
-            AlertUtils.warning("视频加载开了会小差，再试一次吧。", "", primaryStage);
+            AlertUtils.warning("视频加载开了会小差，再试一次吧。", primaryStage);
             log.error("视频加载三次失败！");
             return;
         }
@@ -897,7 +926,7 @@ public class MainWindow {
                 mediaPlayer = new MediaPlayer(new Media(uri));
             } catch (Exception exception) {
                 exception.printStackTrace();
-                AlertUtils.error(exception.getMessage(), "", primaryStage);
+                AlertUtils.error(exception.getMessage(), primaryStage);
                 return;
             }
 

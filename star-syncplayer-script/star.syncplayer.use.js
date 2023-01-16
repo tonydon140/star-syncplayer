@@ -15,8 +15,8 @@
     'use strict';
 
     // 服务器URL
-    // const SERVER_URL = 'ws://localhost:6515/movie'
-    const SERVER_URL = 'wss://www.tonydon.top:6515/movie'
+    const SERVER_URL = 'ws://localhost:6515/syncplayer'
+    // const SERVER_URL = 'wss://www.tonydon.top:6515/movie'
 
     // 网站类型
     const WEBSITE_TYPE = {
@@ -28,32 +28,38 @@
 
     // 消息类型
     const MESSAGE_TYPE = {
-        BIND: 101,
-        MOVIE: 102,
-        NOTIFICATION: 104,
-        SERVER_CONNECT: 201,
-        SERVER_RESPONSE: 202,
+        ACTION: 101,
+        STRING: 102,
+        MOVIE: 103
     }
     // 动作码
     const ACTION_CODE = {
-        MOVIE_PLAY: 1,
-        MOVIE_PAUSE: 2,
-        MOVIE_SYNC: 3,
-        UNBIND: 10,
-        OFFLINE: 11
+        UNBIND: 101,
+        OFFLINE: 102,
+
+        MOVIE_PLAY: 301,
+        MOVIE_PAUSE: 302,
+        MOVIE_SYNC: 304,
+
+        BIND: 201,
+        CONNECTED: 202,
+        SERVER_RESPONSE: 204
     };
 
 
-    // 判断网站的类型
     let website = WEBSITE_TYPE.BILIBILI;
-    let url = window.location.href;
+    let url = window.location.href
+    let isBind = false;
+    let client = new WebSocket(SERVER_URL);
+
+    // 判断网站的类型
     if (url.includes("v.qq.com")) {
         website = WEBSITE_TYPE.TX;
     } else if (url.includes("bilibili")) {
         website = WEBSITE_TYPE.BILIBILI;
-    }else if (url.includes("youtube")){
+    } else if (url.includes("youtube")) {
         website = WEBSITE_TYPE.YOUTUBE;
-    }else if (url.includes("youku")){
+    } else if (url.includes("youku")) {
         website = WEBSITE_TYPE.YOUKU;
     }
 
@@ -64,54 +70,25 @@
             return document.querySelector(".txp_videos_container").children[1];
         } else if (website === WEBSITE_TYPE.BILIBILI) {
             return document.querySelector(".bpx-player-video-wrap video");
-        }else if (website === WEBSITE_TYPE.YOUTUBE){
+        } else if (website === WEBSITE_TYPE.YOUTUBE) {
             return document.querySelector(".html5-main-video");
-        }else if (website === WEBSITE_TYPE.YOUKU){
+        } else if (website === WEBSITE_TYPE.YOUKU) {
             return document.querySelector(".video-layer video");
         }
     }
 
 
-    // 变量
-    let number = '';
-    let isBind = false;
-
-
-    let client = new WebSocket(SERVER_URL);
-
+    // 处理消息
     client.onmessage = function (ev) {
-        let message = JSON.parse(ev.data)
-        let data = JSON.parse(message.json)
+        let message = JSON.parse(ev.data);
+        let data = JSON.parse(message.json);
 
-        // console.log(data);
-
-        if (message.type === MESSAGE_TYPE.SERVER_CONNECT) {
-            number = data['number'];
-            createPane();
-        } else if (message.type === MESSAGE_TYPE.SERVER_RESPONSE) {
-            alert(data['msg']);
-        } else if (message.type === MESSAGE_TYPE.BIND) {
-            doBind(data.targetNumber);
-        } else if (message.type === MESSAGE_TYPE.NOTIFICATION) {
-            if (data.actionCode === ACTION_CODE.UNBIND) {
-                doUnBind();
-            } else if (data.actionCode === ACTION_CODE.OFFLINE) {
-                doUnBind();
-            }
+        if (message.type === MESSAGE_TYPE.ACTION) {
+            doAction(data['actionCode'])
+        } else if (message.type === MESSAGE_TYPE.STRING) {
+            doString(data['actionCode'], data['content'])
         } else if (message.type === MESSAGE_TYPE.MOVIE) {
-            let video = getVideo();
-            if (data.actionCode === ACTION_CODE.MOVIE_PLAY) {
-                // getVideo().click();
-                video.play();
-            } else if (data.actionCode === ACTION_CODE.MOVIE_PAUSE) {
-                // getVideo().click();
-                video.pause();
-            } else if (data.actionCode === ACTION_CODE.MOVIE_SYNC) {
-                video.pause();
-                video.currentTime = data.seconds;
-                video.playbackRate = data.rate;
-                video.play();
-            }
+            doMovie(data);
         }
     }
 
@@ -119,19 +96,51 @@
         console.log(ev)
     }
 
-    let friendNumberInput = undefined;
+    let friendIdInput = undefined;
     let bindButton = undefined;
     let pauseButton = undefined;
     let playButton = undefined;
     let syncButton = undefined;
 
+    function doAction(actionCode) {
+        if (actionCode === ACTION_CODE.UNBIND) {
+            doUnBind();
+        } else if (actionCode === ACTION_CODE.OFFLINE) {
+            doUnBind();
+        }
+    }
+
+    function doString(actionCode, content) {
+        if (actionCode === ACTION_CODE.CONNECTED) {
+            doConnected(content)
+        } else if (actionCode === ACTION_CODE.BIND) {
+            doBind(content);
+        } else if (actionCode === ACTION_CODE.SERVER_RESPONSE) {
+            alert(content);
+        }
+    }
+
+    function doMovie(data) {
+        let video = getVideo();
+        if (data.actionCode === ACTION_CODE.MOVIE_PLAY) {
+            video.play();
+        } else if (data.actionCode === ACTION_CODE.MOVIE_PAUSE) {
+            video.pause();
+        } else if (data.actionCode === ACTION_CODE.MOVIE_SYNC) {
+            video.pause();
+            video.currentTime = data.seconds;
+            video.playbackRate = data.rate;
+            video.play();
+        }
+    }
+
     // 创建面板
-    function createPane() {
+    function doConnected(id) {
         const template = `
             <div style="background-color: antiquewhite; padding: 5px; display: inline-block;position: fixed;bottom: 50px;z-index: 99999">
                 <label>
-                    ${number}
-                    <input id="friendNumberInput" maxlength="8" type="text" placeholder="她/他的星星号" style="width: 100px; outline: none">
+                    ${id}
+                    <input id="friendIdInput" maxlength="6" type="text" placeholder="她/他的星星号" style="width: 100px; outline: none">
                 </label>
                 <button id="bindButton">绑定</button>
                 <button id="playButton">播放</button>
@@ -144,7 +153,7 @@
         tempNode.innerHTML = template;
         document.body.appendChild(tempNode);
 
-        friendNumberInput = tempNode.querySelector("#friendNumberInput");
+        friendIdInput = tempNode.querySelector("#friendIdInput");
         bindButton = tempNode.querySelector("#bindButton");
         pauseButton = tempNode.querySelector("#pauseButton");
         playButton = tempNode.querySelector("#playButton");
@@ -156,31 +165,30 @@
             if (isBind) {
                 // 已经绑定了,则进行解绑
                 doUnBind();
-                sendUnbind();
+                sendActionMessage(ACTION_CODE.UNBIND)
             } else {
                 // 还没有绑定,则进行绑定
-                let number = friendNumberInput.value;
+                let friendId = friendIdInput.value;
 
                 // 校验星星号
-                if (number.length < 8) {
+                if (friendId.length < 8) {
                     alert("星星号必须是8位纯数字");
                     return;
                 }
-                for (let ch of number) {
+                for (let ch of friendId) {
                     if (ch < '0' || ch > '9') {
                         alert("星星号必须是8位纯数字");
                         return;
                     }
                 }
-
-                sendBindMessage(number);
+                sendStringMessage(ACTION_CODE.BIND, friendId)
             }
         }
 
         // 播放按钮
         playButton.onclick = function () {
             if (isBind) {
-                sendMovieMessage(ACTION_CODE.MOVIE_PLAY);
+                sendMovieMessage(ACTION_CODE.MOVIE_PLAY)
             } else {
                 getVideo().play();
             }
@@ -197,33 +205,20 @@
 
         // 同步按钮
         syncButton.onclick = function () {
-            sendMovieMessage(ACTION_CODE.MOVIE_SYNC, getVideo().currentTime, getVideo().playbackRate);
+            let video = getVideo();
+            sendMovieMessage(ACTION_CODE.MOVIE_SYNC, video.currentTime, video.playbackRate);
         }
     }
 
 
-    // 发送绑定消息
-    function sendBindMessage(number) {
-        let json = {
-            'targetNumber': number
-        };
-        let message = {
-            'type': MESSAGE_TYPE.BIND,
-            'json': JSON.stringify(json)
-        };
-        client.send(JSON.stringify(message));
+    function sendActionMessage(actionCode) {
+        let message = `{"type":101,"json":"{\\"actionCode\\":${actionCode}}"}`
+        client.send(message)
     }
 
-    // 发送解除绑定消息
-    function sendUnbind() {
-        let json = {
-            'actionCode': ACTION_CODE.UNBIND
-        };
-        let message = {
-            'type': MESSAGE_TYPE.NOTIFICATION,
-            'json': JSON.stringify(json)
-        };
-        client.send(JSON.stringify(message));
+    function sendStringMessage(actionCode, content) {
+        let message = `{"type":102,"json":"{\\"actionCode\\":${actionCode},\\"content\\":\\"${content}\\"}"}`
+        client.send(message)
     }
 
     // 发送电影消息
@@ -237,13 +232,14 @@
             'type': MESSAGE_TYPE.MOVIE,
             'json': JSON.stringify(json)
         };
+        console.log(JSON.stringify(message))
         client.send(JSON.stringify(message));
     }
 
     // 处理绑定消息
     function doBind(number) {
         isBind = true;
-        friendNumberInput.value = number;
+        friendIdInput.value = number;
         bindButton.innerText = "解除绑定";
         playButton.innerText = '一起播放';
         pauseButton.innerText = '一起暂停';
@@ -253,7 +249,7 @@
     // 处理解绑消息
     function doUnBind() {
         isBind = false;
-        friendNumberInput.value = "";
+        friendIdInput.value = "";
         bindButton.innerText = "绑定";
         playButton.innerText = '播放';
         pauseButton.innerText = '暂停';

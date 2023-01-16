@@ -18,7 +18,8 @@ public class ClientConstants {
 
     public static final String LOCAL_URL = "ws://localhost:1165/websocket";
 
-    public static final String URL_REG = "^ws://[\\S]+";
+//    public static final String URL_REG = "^ws://[\\S]+";
+    public static final String URL_REG = "^(wss|ws)://[\\S]+";
 
     public static final String VERSION = "v1.3.2";
 
