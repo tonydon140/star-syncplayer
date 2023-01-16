@@ -94,6 +94,7 @@ public class MainWindow {
     private AnchorPane syncPane;
     private VBox controlBox;
     private FlowPane videoPane;
+    private AnchorPane bindPane;
 
     private ImageView playImage;
     private ImageView bindImage;
@@ -109,13 +110,17 @@ public class MainWindow {
     private Spinner<Number> rateSpinner;
     private TextField bulletScreenInput;
     private TextField friendInput;
+    private MenuItem closeServerItem;
+    private MenuItem connectDefaultServerItem;
+    private MenuItem connectCustomServerItem;
 
     private boolean mouse;
     private boolean isMouseBottom;
     private boolean isMute;
     private boolean isBind;
+    private boolean isConnection;
 
-    private String ownNumber;
+    private String id;
 
     public MainWindow(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -180,7 +185,7 @@ public class MainWindow {
         videoPane.setPrefHeight(height);
     }
 
-    // todo 添加服务器相关的配置，包括自定义服务器、断开服务器连接
+
     public void init(Application application) {
         // 获得主场景
         this.primaryScene = root.getScene();
@@ -275,14 +280,32 @@ public class MainWindow {
         openVideoMenu.setGraphic(openVideoLabel);
         openVideoLabel.setOnMouseClicked(event -> openVideo());
 
+        // 服务器菜单
+        Menu serverMenu = new Menu("服务器");
+        closeServerItem = new MenuItem("断开连接");
+        connectDefaultServerItem = new MenuItem("连接默认服务器");
+        connectCustomServerItem = new MenuItem("连接自定义服务器");
+        serverMenu.getItems().add(closeServerItem);
+        serverMenu.getItems().add(connectDefaultServerItem);
+        serverMenu.getItems().add(connectCustomServerItem);
+        closeServerItem.setOnAction(event -> closeServer());
+        connectDefaultServerItem.setOnAction(event -> connectServer());
+        connectCustomServerItem.setOnAction(event -> {
+            // todo
+        });
+
+
+        // 帮助菜单
         Menu helpMenu = new Menu("帮助");
         MenuItem updateItem = new MenuItem("检查更新");
-        updateItem.setOnAction(actionEvent -> checkUpdate());
         MenuItem aboutItem = new MenuItem("关于");
+        helpMenu.getItems().add(updateItem);
+        helpMenu.getItems().add(aboutItem);
+        updateItem.setOnAction(actionEvent -> checkUpdate());
         aboutItem.setOnAction(actionEvent -> about());
-        helpMenu.getItems().addAll(updateItem, aboutItem);
 
         menuBar.getMenus().add(openVideoMenu);
+        menuBar.getMenus().add(serverMenu);
         menuBar.getMenus().add(helpMenu);
         root.getChildren().add(menuBar);
     }
@@ -365,12 +388,14 @@ public class MainWindow {
 
         // 自己的星星号
         selfNumberLabel = new Label();
-        selfNumberLabel.setTooltip(new Tooltip("星星号，点击复制"));
+        Tooltip tooltip = new Tooltip("星星号，点击复制");
+        tooltip.setShowDelay(Duration.ZERO);
+        selfNumberLabel.setTooltip(tooltip);
         selfNumberLabel.setCursor(Cursor.HAND);
         selfNumberLabel.setOnMouseClicked(event -> {
             Clipboard clipboard = Clipboard.getSystemClipboard();
             ClipboardContent content = new ClipboardContent();
-            content.putString(ownNumber);
+            content.putString(id);
             clipboard.setContent(content);
         });
 
@@ -378,10 +403,9 @@ public class MainWindow {
         friendInput = new TextField();
         friendInput.setPrefWidth(95);
         friendInput.setPromptText("她/他的星星号");
-        // 现在只能输入8位数字
         friendInput.textProperty().addListener((observable, oldValue, newValue) -> {
-            // 限制长度为 8 个数字
-            if (newValue.length() > 8) friendInput.setText(oldValue);
+            // 限制长度
+            if (newValue.length() > ClientConstants.ID_LENGTH) friendInput.setText(oldValue);
             // 限制输入只为数字
             boolean isNumber = true;
             for (char ch : newValue.toCharArray()) {
@@ -394,12 +418,12 @@ public class MainWindow {
         });
 
         // 绑定按钮
-        AnchorPane linkPane = new AnchorPane();
+        bindPane = new AnchorPane();
         bindImage = new ImageView(this.LINK_ICON);
-        linkPane.setCursor(Cursor.HAND);
-        linkPane.getChildren().add(bindImage);
+        bindPane.setCursor(Cursor.HAND);
+        bindPane.getChildren().add(bindImage);
         // 点击事件，点击进行绑定
-        linkPane.setOnMouseClicked(event -> {
+        bindPane.setOnMouseClicked(event -> {
             if (isBind()) {
                 // 如果已经绑定了就解除绑定
                 // 1. 创建确认信息
@@ -425,8 +449,8 @@ public class MainWindow {
             } else {
                 String number = friendInput.getText();
                 // 校验星星号
-                if (number.length() != 8) {
-                    AlertUtils.error("星星号必须是8位数字", "", primaryStage);
+                if (number.length() != ClientConstants.ID_LENGTH) {
+                    AlertUtils.error("星星号必须是6位数字", "", primaryStage);
                     return;
                 }
                 client.send(StringMessage.BIND.setContent(number).toJson());
@@ -437,7 +461,7 @@ public class MainWindow {
         hBox.getChildren().add(loveImage);
         hBox.getChildren().add(selfNumberLabel);
         hBox.getChildren().add(friendInput);
-        hBox.getChildren().add(linkPane);
+        hBox.getChildren().add(bindPane);
 
         gridPane.add(hBox, 1, 0);
     }
@@ -564,114 +588,55 @@ public class MainWindow {
         gridPane.add(pane, 7, 0);
     }
 
+    // 关闭服务器连接
+    private void closeServer() {
+        try {
+            client.closeBlocking();
+            client = null;
+            log.info("server connection closed");
+
+            isConnection = false;
+            isBind = false;
+            flushUI(UI.CLOSED_SERVER);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // 连接服务器
     private void connectServer() {
         // 开启新的线程连接服务器
         new Thread(() -> {
             try {
-                log.info("正在连接服务器...");
                 client = new WebClient(new URI(ClientConstants.DEFAULT_URL));
                 boolean flag = client.connectBlocking();
+
+                // 连接失败
                 if (!flag) {
                     client = null;
                     AlertUtils.error("服务器连接失败！请检查更新或联系作者！", "", this.primaryStage);
-                    log.error("连接服务器失败！");
+                    log.error("server connection fail!");
                     return;
                 }
+
+                isConnection = true;
+                Platform.runLater(() -> flushUI(UI.CONNECTED_SERVER));
 
                 // 添加观察者
                 client.addObserver(new ClientObserver() {
                     @Override
                     public void onAction(int code) {
-                        // 另一半下线
-                        if (code == ActionCode.OFFLINE) {
-                            // 解除绑定
-                            isBind = false;
-                            // 更新 UI
-                            Platform.runLater(() -> flushUI(UI.UN_BIND));
-                            AlertUtils.information("另一半断开连接！", "", primaryStage);
-                            log.info("与另一半解除绑定！");
-                        } else if (code == ActionCode.UNBIND) {
-                            // 解除绑定
-                            isBind = false;
-                            // 更新 UI
-                            Platform.runLater(() -> flushUI(UI.UN_BIND));
-                            AlertUtils.information("另一半解除绑定！", "", primaryStage);
-                            log.info("与另一半解除绑定！");
-                        }
+                        doAction(code);
                     }
 
                     @Override
                     public void onString(int code, String content) {
-                        // 绑定
-                        if (code == ActionCode.BIND) {
-                            // 将客户端设置为已绑定
-                            isBind = true;
-                            // 更新 UI
-                            Platform.runLater(() -> {
-                                // 设置对方的星星号
-                                friendInput.setText(content);
-                                // 更换连接图标为断开连接图标
-                                bindImage.setImage(BREAK_ICON);
-                                // 将播放/暂停按钮设置为蓝色
-                                if (isPlaying()) {
-                                    playImage.setImage(PAUSE_BLUE_ICON);
-                                } else {
-                                    playImage.setImage(PLAY_BLUE_ICON);
-                                }
-                                // 解禁同步图标
-                                syncImage.setImage(SYNC_BLUE_ICON);
-                                if (mediaView.getMediaPlayer() != null) {
-                                    syncPane.setDisable(false);
-                                    syncPane.setOpacity(1);
-                                }
-                                // 转移焦点
-                                volumeSlider.requestFocus();
-                            });
-                            log.info("与 {} 绑定成功！", content);
-                        }
-
-                        // 建立连接
-                        else if (code == ActionCode.CONNECTED) {
-                            ownNumber = content;
-                            Platform.runLater(() -> selfNumberLabel.setText(content));
-                        }
-
-                        // 弹幕消息
-                        else if (code == ActionCode.BULLET_SCREEN) {
-                            Platform.runLater(() -> showBulletScreen(content, TARGET_COLOR));
-                        }
-
-                        // 服务器消息
-                        else if (code == ActionCode.SERVER_RESPONSE) {
-                            Platform.runLater(() -> AlertUtils.error(content, "", primaryStage));
-                        }
+                        doString(code, content);
                     }
 
                     @Override
                     public void onMovie(MovieMessage message) {
-                        MediaPlayer player = mediaView.getMediaPlayer();
-                        // 如果视频没有加载，则不做处理
-                        if (player == null) {
-                            log.info("视频尚未加载！");
-                            return;
-                        }
-                        if (message.getActionCode() == ActionCode.MOVIE_PLAY) {
-                            player.play();
-                            playImage.setImage(PAUSE_BLUE_ICON);
-                        } else if (message.getActionCode() == ActionCode.MOVIE_PAUSE) {
-                            player.pause();
-                            playImage.setImage(PLAY_BLUE_ICON);
-                        } else if (message.getActionCode() == ActionCode.MOVIE_STOP) {
-                            player.stop();
-                            playImage.setImage(PLAY_BLUE_ICON);
-                        } else if (message.getActionCode() == ActionCode.MOVIE_SYNC) {
-                            player.seek(Duration.seconds(message.getSeconds()));
-                            player.setRate(message.getRate());
-                            player.play();
-                            playImage.setImage(PAUSE_BLUE_ICON);
-                            log.info("同步播放 -- 进度：{}，倍速：{}", DurationUtils.getText(message.getSeconds()), message.getRate());
-                        }
+                        doMovie(message);
                     }
                 });
             } catch (URISyntaxException | InterruptedException e) {
@@ -680,47 +645,163 @@ public class MainWindow {
         }, "ConnectServerThread").start();
     }
 
+    // 处理 ActionMessage
+    private void doAction(int code) {
+        // 另一半下线
+        if (code == ActionCode.OFFLINE) {
+            // 解除绑定
+            isBind = false;
+            // 更新 UI
+            Platform.runLater(() -> flushUI(UI.UN_BIND));
+            AlertUtils.information("另一半断开连接！", "", primaryStage);
+            log.info("与另一半解除绑定！");
+        } else if (code == ActionCode.UNBIND) {
+            // 解除绑定
+            isBind = false;
+            // 更新 UI
+            Platform.runLater(() -> flushUI(UI.UN_BIND));
+            AlertUtils.information("另一半解除绑定！", "", primaryStage);
+            log.info("与另一半解除绑定！");
+        }
+    }
+
+
+    // 处理字符消息
+    private void doString(int code, String content) {
+        // 绑定
+        if (code == ActionCode.BIND) {
+            // 将客户端设置为已绑定
+            isBind = true;
+            // 更新 UI
+            Platform.runLater(() -> {
+                // 设置对方的星星号
+                friendInput.setText(content);
+                // 更换连接图标为断开连接图标
+                bindImage.setImage(BREAK_ICON);
+                // 将播放/暂停按钮设置为蓝色
+                if (isPlaying()) {
+                    playImage.setImage(PAUSE_BLUE_ICON);
+                } else {
+                    playImage.setImage(PLAY_BLUE_ICON);
+                }
+                // 解禁同步图标
+                syncImage.setImage(SYNC_BLUE_ICON);
+                if (mediaView.getMediaPlayer() != null) {
+                    syncPane.setDisable(false);
+                    syncPane.setOpacity(1);
+                }
+                // 转移焦点
+                volumeSlider.requestFocus();
+            });
+            log.info("与 {} 绑定成功！", content);
+        }
+
+        // 建立连接
+        else if (code == ActionCode.CONNECTED) {
+            id = content;
+            log.info("server connected, id = {}", id);
+            Platform.runLater(() -> selfNumberLabel.setText(content));
+        }
+
+        // 弹幕消息
+        else if (code == ActionCode.BULLET_SCREEN) {
+            Platform.runLater(() -> showBulletScreen(content, TARGET_COLOR));
+        }
+
+        // 服务器消息
+        else if (code == ActionCode.SERVER_RESPONSE) {
+            Platform.runLater(() -> AlertUtils.error(content, "", primaryStage));
+        }
+    }
+
+
+    // 处理电影消息
+    private void doMovie(MovieMessage message) {
+        MediaPlayer player = mediaView.getMediaPlayer();
+        // 如果视频没有加载，则不做处理
+        if (player == null) {
+            log.info("视频尚未加载！");
+            return;
+        }
+        if (message.getActionCode() == ActionCode.MOVIE_PLAY) {
+            player.play();
+            playImage.setImage(PAUSE_BLUE_ICON);
+        } else if (message.getActionCode() == ActionCode.MOVIE_PAUSE) {
+            player.pause();
+            playImage.setImage(PLAY_BLUE_ICON);
+        } else if (message.getActionCode() == ActionCode.MOVIE_STOP) {
+            player.stop();
+            playImage.setImage(PLAY_BLUE_ICON);
+        } else if (message.getActionCode() == ActionCode.MOVIE_SYNC) {
+            player.seek(Duration.seconds(message.getSeconds()));
+            player.setRate(message.getRate());
+            player.play();
+            playImage.setImage(PAUSE_BLUE_ICON);
+            log.info("同步播放 -- 进度：{}，倍速：{}", DurationUtils.getText(message.getSeconds()), message.getRate());
+        }
+    }
+
     // 刷新 UI
     private void flushUI(int code) {
-        if (code == UI.UN_BIND) {
-            // 清空另一半的星星号
-            friendInput.setText("");
-            // 更换断开连接图标为连接图标
-            bindImage.setImage(LINK_ICON);
-            // 将播放/暂停按钮设置为黑色
-            if (isPlaying()) {
-                playImage.setImage(PAUSE_BLACK_ICON);
-            } else {
-                playImage.setImage(PLAY_BLACK_ICON);
+        switch (code) {
+            case UI.UN_BIND -> {
+                // 清空另一半的星星号
+                friendInput.setText("");
+                // 更换断开连接图标为连接图标
+                bindImage.setImage(LINK_ICON);
+                // 将播放/暂停按钮设置为黑色
+                if (isPlaying()) {
+                    playImage.setImage(PAUSE_BLACK_ICON);
+                } else {
+                    playImage.setImage(PLAY_BLACK_ICON);
+                }
+                // 禁止同步图标
+                syncPane.setDisable(true);
+                syncPane.setOpacity(0.6);
+                syncImage.setImage(SYNC_BLACK_ICON);
             }
-            // 禁止同步图标
-            syncPane.setDisable(true);
-            syncPane.setOpacity(0.6);
-            syncImage.setImage(SYNC_BLACK_ICON);
-        } else if (code == UI.OPEN_VIDEO) {
-            playPane.setDisable(false);
-            playPane.setOpacity(1);
-            videoSlider.setDisable(false);
-            volumeSlider.setDisable(false);
-            rateSpinner.setDisable(false);
-            bulletScreenInput.setDisable(false);
-            if (isBind()) {
-                syncPane.setDisable(false);
-                syncPane.setOpacity(1);
-                syncImage.setImage(SYNC_BLUE_ICON);
+            case UI.OPEN_VIDEO -> {
+                playPane.setDisable(false);
+                playPane.setOpacity(1);
+                videoSlider.setDisable(false);
+                volumeSlider.setDisable(false);
+                rateSpinner.setDisable(false);
+                bulletScreenInput.setDisable(false);
+                if (isBind()) {
+                    syncPane.setDisable(false);
+                    syncPane.setOpacity(1);
+                    syncImage.setImage(SYNC_BLUE_ICON);
+                }
             }
-        } else if (code == UI.CLOSE_VIDEO) {
-            playPane.setDisable(true);
-            playPane.setOpacity(0.6);
-            videoSlider.setDisable(true);
-            volumeSlider.setDisable(true);
-            rateSpinner.setDisable(true);
-            bulletScreenInput.setDisable(true);
-            // 禁止同步图标
-            syncPane.setDisable(true);
-            syncPane.setOpacity(0.6);
-            syncImage.setImage(SYNC_BLACK_ICON);
+            case UI.CLOSE_VIDEO -> {
+                playPane.setDisable(true);
+                playPane.setOpacity(0.6);
+                videoSlider.setDisable(true);
+                volumeSlider.setDisable(true);
+                rateSpinner.setDisable(true);
+                bulletScreenInput.setDisable(true);
+                // 禁止同步图标
+                syncPane.setDisable(true);
+                syncPane.setOpacity(0.6);
+                syncImage.setImage(SYNC_BLACK_ICON);
+            }
+            case UI.CONNECTED_SERVER -> {
+                bindPane.setDisable(false);
+                bindPane.setOpacity(1);
+                closeServerItem.setDisable(false);
+                connectDefaultServerItem.setDisable(true);
+                connectCustomServerItem.setDisable(true);
+            }
+            case UI.CLOSED_SERVER -> {
+                flushUI(UI.UN_BIND);
+                bindPane.setDisable(true);
+                bindPane.setOpacity(0.6);
+                closeServerItem.setDisable(true);
+                connectDefaultServerItem.setDisable(false);
+                connectCustomServerItem.setDisable(false);
+            }
         }
+
     }
 
     private boolean isBind() {
