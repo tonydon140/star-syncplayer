@@ -1,7 +1,6 @@
 package top.tonydon.syncplayer;
 
 import javafx.application.Application;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
@@ -10,17 +9,16 @@ import top.tonydon.syncplayer.constant.RoomConstants;
 
 import java.util.Objects;
 
-public class RoomApplication extends Application {
-
-    RoomWindow roomWindow;
+public class TempApp extends Application {
+    TempWindow roomWindow;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
         // 创建窗口
-        roomWindow = new RoomWindow(primaryStage);
+        roomWindow = new TempWindow(primaryStage);
 
         // 加载窗口
-        Scene scene = new Scene(roomWindow.getRoot());
+        Scene scene = new Scene(roomWindow.load());
         primaryStage.getIcons().add(new Image(Objects.requireNonNull(getClass().getResource("icon/star_128.png")).toString()));
         primaryStage.setTitle(RoomConstants.TITLE);
         primaryStage.setScene(scene);

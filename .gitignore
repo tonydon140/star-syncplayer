@@ -1,7 +1,8 @@
 .idea
 logs
 */target
+*.iml
 
-star-syncplayer/src/test
+star-syncplayer-client/src/test
 star-syncplayer-common/src/test
 star-syncplayer-server/src/test

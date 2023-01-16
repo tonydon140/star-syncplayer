@@ -1,6 +1,9 @@
 package top.tonydon.syncplayer.constant;
 
 public class ClientConstants {
+
+    public static final int ID_LENGTH = 6;
+
     public static final String EXAMPLE_URL = "ws://www.example.com:8888/websocket";
 
 //    public static final String DEFAULT_URL = "wss://www.tonydon.top:6515/movie";

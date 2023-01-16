@@ -30,7 +30,7 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
     // 连接建立
     @Override
     public void onOpen(ServerHandshake serverHandshake) {
-        log.info("连接服务器成功！");
+
     }
 
 

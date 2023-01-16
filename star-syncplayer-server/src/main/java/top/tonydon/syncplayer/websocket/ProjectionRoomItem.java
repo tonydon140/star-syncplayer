@@ -8,6 +8,7 @@ import jakarta.websocket.server.ServerEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import top.tonydon.syncplayer.constant.ServerConstants;
 import top.tonydon.syncplayer.message.ActionCode;
 import top.tonydon.syncplayer.message.JsonMessage;
 import top.tonydon.syncplayer.message.Message;
@@ -23,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 // todo 放映室，用于多人同步播放
-@ServerEndpoint(value = "/projection-room")
+@ServerEndpoint(value = "/room")
 @Component
 public class ProjectionRoomItem {
     private static final Logger log = LoggerFactory.getLogger(ProjectionRoomItem.class);
@@ -56,10 +57,13 @@ public class ProjectionRoomItem {
         this.session = session;
 
         // 创建 id
-        this.id = StrUtils.randomNum(ID_LENGTH);
+        this.id = StrUtils.randomNum(ServerConstants.ID_LENGTH);
         while (ID_SET.contains(this.id))
-            this.id = StrUtils.randomNum(ID_LENGTH);
+            this.id = StrUtils.randomNum(ServerConstants.ID_LENGTH);
         ID_SET.add(this.id);
+
+        // 写回 id
+        sendAsync(StringMessage.CONNECTED.setContent(this.id));
 
         log.info("item add --- {}", this.id);
     }
@@ -73,11 +77,12 @@ public class ProjectionRoomItem {
             // 房间已经没有人了，则删除房间
             if (room.size() == 0) {
                 ROOM_MAP.remove(roomId);
+                log.info("room closed, room id = {}", roomId);
             }
         }
         // 从 ID_SET 中删除
         ID_SET.remove(this.id);
-        log.info("item closed --- {}", this.id);
+        log.info("item closed, id = {}", this.id);
     }
 
 
@@ -154,6 +159,7 @@ public class ProjectionRoomItem {
         // 如果放映室为空，则删除放映室
         if (room.size() == 0) {
             ROOM_MAP.remove(roomId);
+            log.info("room closed, room id = {}", roomId);
         }
         roomId = null;
         log.info("{} --- quit room", this.id);
