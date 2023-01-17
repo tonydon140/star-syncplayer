@@ -189,12 +189,11 @@ public class MainWindow {
     public void init(Application application) {
         // 获得主场景
         this.primaryScene = root.getScene();
-        // 获得主窗口
-        this.primaryStage = (Stage) this.primaryScene.getWindow();
         // 获取 host
         this.hostServices = application.getHostServices();
         // 连接服务器
-        connectServer();
+        connectServer(ClientConstants.DEFAULT_URL);
+        // 请求焦点
         volumeSlider.requestFocus();
 
         // 获取主屏幕尺寸
@@ -289,7 +288,7 @@ public class MainWindow {
         serverMenu.getItems().add(connectDefaultServerItem);
         serverMenu.getItems().add(connectCustomServerItem);
         closeServerItem.setOnAction(event -> closeServer());
-        connectDefaultServerItem.setOnAction(event -> connectServer());
+        connectDefaultServerItem.setOnAction(event -> connectServer(ClientConstants.DEFAULT_URL));
         connectCustomServerItem.setOnAction(event -> {
             // todo
             connectCustomServer();
@@ -605,11 +604,11 @@ public class MainWindow {
     }
 
     // 连接服务器
-    private void connectServer() {
+    private void connectServer(String url) {
         // 开启新的线程连接服务器
         new Thread(() -> {
             try {
-                client = new WebClient(new URI(ClientConstants.DEFAULT_URL));
+                client = new WebClient(new URI(url));
                 boolean flag = client.connectBlocking();
 
                 // 连接失败
@@ -646,6 +645,7 @@ public class MainWindow {
         }, "ConnectServerThread").start();
     }
 
+    // todo 完善连接自定义服务器
     private void connectCustomServer() {
         // 1. 创建对话框
         TextInputDialog inputDialog = new TextInputDialog();
@@ -667,11 +667,13 @@ public class MainWindow {
 
         // 判断地址是否正确
         String url = result.get();
-        log.info("url = {}", url);
+        log.info("custom server url = {}", url);
         if (!url.matches(ClientConstants.URL_REG)) {
             AlertUtils.error("地址格式不正确！", primaryStage);
             return;
         }
+
+        connectServer(url);
     }
 
     // 处理 ActionMessage
