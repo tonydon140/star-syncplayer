@@ -15,7 +15,6 @@ import top.tonydon.syncplayer.message.common.StringMessage;
 import top.tonydon.syncplayer.util.SocketRoom;
 import top.tonydon.syncplayer.util.StrUtils;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -30,19 +29,19 @@ public class SyncPlayerItem {
      * key：id
      * value：SocketRoom
      */
-    private static final Map<String, SocketRoom> ROOM_MAP = new ConcurrentHashMap<>();
+    public static final Map<String, SocketRoom> ROOM_MAP = new ConcurrentHashMap<>();
 
     /**
      * key：id
      * value：SyncPlayerItem
      */
-    private static final Map<String, SyncPlayerItem> PLAYER_ITEM_MAP = new ConcurrentHashMap<>();
+    public static final Map<String, SyncPlayerItem> PLAYER_ITEM_MAP = new ConcurrentHashMap<>();
 
 
     private Session session;
     private String id;
-    private String friendId;
     private String roomId;
+    public String friendId;
 
     private void sendAsync(String content) {
         this.session.getAsyncRemote().sendText(content);
@@ -180,20 +179,5 @@ public class SyncPlayerItem {
     private void doBulletScreen(String content) {
         // 直接将弹幕消息发生给另一方
         PLAYER_ITEM_MAP.get(friendId).sendAsync(StringMessage.BULLET_SCREEN.setContent(content));
-    }
-
-
-    // 获取当前在线的人数
-    public static int getCount() {
-        return PLAYER_ITEM_MAP.size();
-    }
-
-    // 获取 PLAYER_ITEM_MAP
-    public static Map<String, String> getMap() {
-        Map<String, String> map = new HashMap<>();
-        for (Map.Entry<String, SyncPlayerItem> entry : PLAYER_ITEM_MAP.entrySet()) {
-            map.put(entry.getKey(), entry.getValue().friendId);
-        }
-        return map;
     }
 }

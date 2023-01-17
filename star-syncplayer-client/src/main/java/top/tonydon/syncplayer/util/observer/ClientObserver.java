@@ -10,4 +10,6 @@ public interface ClientObserver {
 
     void onMovie(MovieMessage message);
 
+    void onError(Exception exception);
+
 }

@@ -260,6 +260,11 @@ public class RoomWindow {
                     public void onMovie(MovieMessage message) {
                         doMovie(message);
                     }
+
+                    @Override
+                    public void onError(Exception exception) {
+
+                    }
                 });
             } catch (URISyntaxException | InterruptedException e) {
                 e.printStackTrace();

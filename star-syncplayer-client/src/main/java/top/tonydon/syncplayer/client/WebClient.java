@@ -76,6 +76,7 @@ public class WebClient extends WebSocketClient implements Observable<ClientObser
     public void onError(Exception ex) {
         ex.printStackTrace();
         log.error(ex.getMessage());
+        observerSet.forEach(clientObserver -> clientObserver.onError(ex));
     }
 
 

@@ -64,9 +64,12 @@ import java.util.concurrent.TimeUnit;
 public class MainWindow {
     private final Logger log = LoggerFactory.getLogger(MainWindow.class);
 
-    private Stage primaryStage;
+    private final Stage primaryStage;
+    private final Robot ROBOT;
+    private final CountTask COUNT_TASK;
     private Scene primaryScene;
     private HostServices hostServices;
+    private WebClient client;
 
     private final Image PLAY_BLACK_ICON;
     private final Image PLAY_BLUE_ICON;
@@ -82,11 +85,6 @@ public class MainWindow {
     private final Image SOUND_CLOSE_ICON;
     private final Color SELF_COLOR = Color.WHITESMOKE;
     private final Color TARGET_COLOR = Color.web("#FFFF00");
-
-
-    private WebClient client;
-    private final Robot robot;
-    private final CountTask countTask;
 
     private MenuBar menuBar;
     private AnchorPane root;
@@ -119,13 +117,14 @@ public class MainWindow {
     private boolean isMute;
     private boolean isBind;
     private boolean isConnection;
+    private boolean isCustom;
 
     private String id;
 
     public MainWindow(Stage primaryStage) {
         this.primaryStage = primaryStage;
-        this.robot = new Robot();
-        this.countTask = new CountTask(TimeUnit.SECONDS, 1);
+        this.ROBOT = new Robot();
+        this.COUNT_TASK = new CountTask(TimeUnit.SECONDS, 1);
 
         this.PLAY_BLACK_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/play_black.png")).toString());
         this.PLAY_BLUE_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/play_blue.png")).toString());
@@ -223,18 +222,18 @@ public class MainWindow {
 
 
         // 启动任务
-        countTask.start();
-        countTask.addObserver((old, cur) -> {
+        COUNT_TASK.start();
+        COUNT_TASK.addObserver((old, cur) -> {
             // 当视频正在播放时，每搁一段时间移动一下鼠标
             boolean isPlay = cur % ClientConstants.MOUSE_MOVE_INTERVAL == 0
                     && mediaView.getMediaPlayer() != null
                     && mediaView.getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING;
             if (isPlay) {
                 Platform.runLater(() -> {
-                    double mouseX = robot.getMouseX();
-                    double mouseY = robot.getMouseY();
-                    robot.mouseMove(mouseX + 1, mouseY + 1);
-                    robot.mouseMove(mouseX, mouseY);
+                    double mouseX = ROBOT.getMouseX();
+                    double mouseY = ROBOT.getMouseY();
+                    ROBOT.mouseMove(mouseX + 1, mouseY + 1);
+                    ROBOT.mouseMove(mouseX, mouseY);
                     log.debug("mouse move");
                 });
             }
@@ -288,11 +287,11 @@ public class MainWindow {
         serverMenu.getItems().add(connectDefaultServerItem);
         serverMenu.getItems().add(connectCustomServerItem);
         closeServerItem.setOnAction(event -> closeServer());
-        connectDefaultServerItem.setOnAction(event -> connectServer(ClientConstants.DEFAULT_URL));
-        connectCustomServerItem.setOnAction(event -> {
-            // todo
-            connectCustomServer();
+        connectDefaultServerItem.setOnAction(event -> {
+            isCustom = true;
+            connectServer(ClientConstants.DEFAULT_URL);
         });
+        connectCustomServerItem.setOnAction(event -> connectCustomServer());
 
 
         // 帮助菜单
@@ -609,16 +608,21 @@ public class MainWindow {
         new Thread(() -> {
             try {
                 client = new WebClient(new URI(url));
-                boolean flag = client.connectBlocking();
+                boolean flag = client.connectBlocking(3, TimeUnit.SECONDS);
 
                 // 连接失败
                 if (!flag) {
                     client = null;
-                    AlertUtils.error("服务器连接失败！请检查更新或联系作者！", this.primaryStage);
                     log.error("server connection fail!");
+
+                    if (isCustom)
+                        AlertUtils.error("自定义服务器连接失败！请检查服务器地址是否正确，或联系服务器作者！", this.primaryStage);
+                    else
+                        AlertUtils.error("默认服务器连接失败！请检查更新或联系作者！", this.primaryStage);
                     return;
                 }
 
+                // 连接成功
                 isConnection = true;
                 Platform.runLater(() -> flushUI(UI.CONNECTED_SERVER));
 
@@ -638,6 +642,11 @@ public class MainWindow {
                     public void onMovie(MovieMessage message) {
                         doMovie(message);
                     }
+
+                    @Override
+                    public void onError(Exception exception) {
+                        doError(exception);
+                    }
                 });
             } catch (URISyntaxException | InterruptedException e) {
                 e.printStackTrace();
@@ -645,7 +654,7 @@ public class MainWindow {
         }, "ConnectServerThread").start();
     }
 
-    // todo 完善连接自定义服务器
+    // 连接自定义服务器
     private void connectCustomServer() {
         // 1. 创建对话框
         TextInputDialog inputDialog = new TextInputDialog();
@@ -673,8 +682,10 @@ public class MainWindow {
             return;
         }
 
+        isCustom = true;
         connectServer(url);
     }
+
 
     // 处理 ActionMessage
     private void doAction(int code) {
@@ -770,6 +781,10 @@ public class MainWindow {
             playImage.setImage(PAUSE_BLUE_ICON);
             log.info("同步播放 -- 进度：{}，倍速：{}", DurationUtils.getText(message.getSeconds()), message.getRate());
         }
+    }
+
+    private void doError(Exception ex) {
+        AlertUtils.error("发生异常", ex.getMessage(), primaryStage);
     }
 
     // 刷新 UI
@@ -1036,7 +1051,7 @@ public class MainWindow {
             log.info("销毁视频");
         }
         // 关闭任务
-        countTask.stop();
+        COUNT_TASK.stop();
         log.debug("结束计时任务");
         log.info("客户端关闭");
     }
