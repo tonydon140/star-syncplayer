@@ -34,7 +34,6 @@
 | star-syncplayer-client | 使用 JavaFX 开发的客户端。                                   |
 | star-syncplayer-common | client 和 server 之间使用的消息实体类                        |
 | star-syncplayer-server | 基于 SpringBoot 的 WebSocket 服务端示例。<br>想自建服务器的朋友可以参考这个模块进行实现。 |
-| star-syncplayer-ccript | 基于星星电影院的油猴脚本，可以在浏览器内实现同步播放<br>目前支持的平台有：腾讯视频、Bilbili、YouTuBe、优酷 |
 | star-websocket-client  | 模块化的 WebSocket 的客户端实现。基于 [Java-Websocket](https://github.com/TooTallNate/Java-WebSocket) |
 
 
