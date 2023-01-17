@@ -14,7 +14,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <javafx.version>19</javafx.version>
         <!-- EXE 的名称 -->
-        <name>StarMovie</name>
+        <name>StarSyncplayer</name>
     </properties>
 
     <dependencies>
@@ -95,11 +95,11 @@
                             <organizationName>TonyDon</organizationName>
                             <winConfig>
                                 <!-- 软件图标路径 -->
-                                <icoFile>src/main/resources/top/tonydon/icon/star_128.ico</icoFile>
+                                <icoFile>src/main/resources/top/tonydon/syncplayer/icon/star_128.ico</icoFile>
                                 <!-- EXE：文件说明 -->
-                                <fileDescription>StarMovie</fileDescription>
+                                <fileDescription>StarSyncplayer</fileDescription>
                                 <!-- EXE：产品名称 -->
-                                <productName>StarMovie</productName>
+                                <productName>StarSyncplayer</productName>
                             </winConfig>
                         </configuration>
                     </execution>
