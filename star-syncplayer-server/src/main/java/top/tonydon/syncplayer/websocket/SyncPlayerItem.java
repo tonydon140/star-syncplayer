@@ -5,14 +5,12 @@ import jakarta.websocket.server.ServerEndpoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
-import top.tonydon.syncplayer.constant.ServerConstants;
 import top.tonydon.syncplayer.message.ActionCode;
 import top.tonydon.syncplayer.message.JsonMessage;
 import top.tonydon.syncplayer.message.Message;
 import top.tonydon.syncplayer.message.MessageType;
 import top.tonydon.syncplayer.message.common.ActionMessage;
 import top.tonydon.syncplayer.message.common.StringMessage;
-import top.tonydon.syncplayer.util.SocketRoom;
 import top.tonydon.syncplayer.util.StrUtils;
 
 import java.util.Map;
@@ -25,11 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SyncPlayerItem {
     private static final Logger log = LoggerFactory.getLogger(SyncPlayerItem.class);
 
-    /**
-     * key：id
-     * value：SocketRoom
-     */
-    public static final Map<String, SocketRoom> ROOM_MAP = new ConcurrentHashMap<>();
+    private static final int ID_LENGTH = 6;
 
     /**
      * key：id
@@ -40,7 +34,6 @@ public class SyncPlayerItem {
 
     private Session session;
     private String id;
-    private String roomId;
     public String friendId;
 
     private void sendAsync(String content) {
@@ -58,9 +51,9 @@ public class SyncPlayerItem {
         this.session = session;
 
         // 生成星星号
-        this.id = StrUtils.randomNum(ServerConstants.ID_LENGTH);
+        this.id = StrUtils.randomNum(ID_LENGTH);
         while (PLAYER_ITEM_MAP.containsKey(this.id))
-            this.id = StrUtils.randomNum(ServerConstants.ID_LENGTH);
+            this.id = StrUtils.randomNum(ID_LENGTH);
         PLAYER_ITEM_MAP.put(id, this);
 
         // 返回连接消息
@@ -83,14 +76,15 @@ public class SyncPlayerItem {
             case MessageType.MOVIE -> doMovie(json);
         }
 
-        log.info("{} --- {}", id, json);
+        log.debug("id = {}, json = {}", id, json);
     }
 
 
     // 处理错误
     @OnError
     public void onError(Throwable error) {
-        log.error("{} --- {}", id, error.getMessage());
+        log.error("id = {}, error message = {}", id, error.getMessage());
+        log.error("id = {}, error = {}", id, error);
         error.printStackTrace();
     }
 
@@ -116,6 +110,8 @@ public class SyncPlayerItem {
     private void doAction(int actionCode) {
         if (actionCode == ActionCode.UNBIND) {
             doUnBind();
+        } else if (actionCode == ActionCode.HEARTBEAT) {
+            sendAsync(ActionMessage.HEARTBEAT);
         }
     }
 

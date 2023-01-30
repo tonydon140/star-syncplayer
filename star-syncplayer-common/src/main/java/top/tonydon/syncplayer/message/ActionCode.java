@@ -9,8 +9,7 @@ public class ActionCode {
      **************************************************************************/
     public static final int UNBIND = 101;
     public static final int OFFLINE = 102;
-    public static final int CREATE_ROOM = 103;
-    public static final int QUIT_ROOM = 104;
+    public static final int HEARTBEAT = 103;
 
 
     /**************************************************************************

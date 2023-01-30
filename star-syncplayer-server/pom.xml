@@ -6,7 +6,7 @@
 
     <groupId>top.tonydon.syncplayer</groupId>
     <artifactId>star-syncplayer-server</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -30,7 +30,7 @@
         <dependency>
             <groupId>top.tonydon.syncplayer</groupId>
             <artifactId>star-syncplayer-common</artifactId>
-            <version>1.4.0</version>
+            <version>1.4.1</version>
         </dependency>
 
         <dependency>

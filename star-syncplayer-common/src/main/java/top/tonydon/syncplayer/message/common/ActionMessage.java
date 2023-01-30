@@ -12,10 +12,7 @@ public class ActionMessage extends Message {
 
     public static final ActionMessage UNBIND = new ActionMessage(ActionCode.UNBIND);
     public static final ActionMessage OFFLINE = new ActionMessage(ActionCode.OFFLINE);
-
-    public static final ActionMessage CREATE_ROOM = new ActionMessage(ActionCode.CREATE_ROOM);
-    public static final ActionMessage QUIT_ROOM = new ActionMessage(ActionCode.QUIT_ROOM);
-//    public static final ActionMessage MOVIE_PAUSE = new ActionMessage(ActionCode.QUIT_ROOM);
+    public static final ActionMessage HEARTBEAT = new ActionMessage(ActionCode.HEARTBEAT);
 
     private int actionCode;
 
