@@ -86,6 +86,8 @@ public class SyncPlayerItem {
         log.error("id = {}, error message = {}", id, error.getMessage());
         log.error("id = {}, error = {}", id, error);
         error.printStackTrace();
+        // 发生异常关闭连接
+        onClose();
     }
 
     // 处理连接关闭

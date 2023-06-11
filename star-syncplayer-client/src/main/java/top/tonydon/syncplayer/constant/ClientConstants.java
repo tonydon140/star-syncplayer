@@ -6,8 +6,8 @@ public class ClientConstants {
 
     public static final String EXAMPLE_URL = "ws://www.example.com:8888/websocket";
 
-    public static final String DEFAULT_URL = "wss://www.tonydon.top:6515/syncplayer";
-//    public static final String DEFAULT_URL = "ws://localhost:6515/syncplayer";
+//    public static final String DEFAULT_URL = "wss://www.tonydon.top:6515/syncplayer";
+    public static final String DEFAULT_URL = "ws://localhost:6515/syncplayer";
 //    public static final String DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer";
 
     public static final String CHECK_UPDATE_URL = "https://tonydon.top:6515/project-version/latest/1";
@@ -20,9 +20,10 @@ public class ClientConstants {
 
     public static final String URL_REG = "^(wss|ws)://[\\S]+";
 
-    public static final String VERSION = "v1.4.0";
+    public static final String VERSION = "v2.0.0-beta.0";
 
-    public static final int VERSION_NUMBER = 14;
+//    public static final int VERSION_NUMBER = 14;
+    public static final int VERSION_NUMBER = 15;
 
     public static final String TITLE = "星星电影院 " + VERSION;
 

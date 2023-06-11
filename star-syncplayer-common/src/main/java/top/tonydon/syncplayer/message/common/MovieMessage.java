@@ -19,27 +19,27 @@ public class MovieMessage extends Message {
 
     private int actionCode;
 
-    private double seconds;
+    private long milliseconds;
 
-    private double rate;
+    private float rate;
 
     public MovieMessage() {
 
+    }
+
+    @Override
+    public int getType() {
+        return MessageType.MOVIE;
     }
 
     public MovieMessage(int actionCode) {
         this.actionCode = actionCode;
     }
 
-    public MovieMessage(int actionCode, double seconds, double rate) {
+    public MovieMessage(int actionCode, long milliseconds, float rate) {
         this.actionCode = actionCode;
-        this.seconds = seconds;
+        this.milliseconds = milliseconds;
         this.rate = rate;
-    }
-
-    @Override
-    public int getType() {
-        return MessageType.MOVIE;
     }
 
     public int getActionCode() {
@@ -50,19 +50,19 @@ public class MovieMessage extends Message {
         this.actionCode = actionCode;
     }
 
-    public double getSeconds() {
-        return seconds;
+    public long getMilliseconds() {
+        return milliseconds;
     }
 
-    public void setSeconds(double seconds) {
-        this.seconds = seconds;
+    public void setMilliseconds(long milliseconds) {
+        this.milliseconds = milliseconds;
     }
 
-    public double getRate() {
+    public float getRate() {
         return rate;
     }
 
-    public void setRate(double rate) {
+    public void setRate(float rate) {
         this.rate = rate;
     }
 
@@ -70,8 +70,8 @@ public class MovieMessage extends Message {
     public String toString() {
         return "MovieMessage{" +
                 "actionCode=" + actionCode +
-                ", seconds=" + seconds +
+                ", milliseconds=" + milliseconds +
                 ", rate=" + rate +
-                "} " + super.toString();
+                '}';
     }
 }

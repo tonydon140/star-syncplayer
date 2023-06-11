@@ -20,9 +20,6 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaView;
 import javafx.scene.paint.Color;
 import javafx.scene.robot.Robot;
 import javafx.scene.text.Font;
@@ -37,6 +34,7 @@ import org.slf4j.LoggerFactory;
 import top.tonydon.syncplayer.client.WebClient;
 import top.tonydon.syncplayer.constant.ClientConstants;
 import top.tonydon.syncplayer.constant.UI;
+import top.tonydon.syncplayer.constant.VideoConstants;
 import top.tonydon.syncplayer.entity.ProjectVersion;
 import top.tonydon.syncplayer.entity.VersionResult;
 import top.tonydon.syncplayer.exception.HttpException;
@@ -46,11 +44,16 @@ import top.tonydon.syncplayer.message.common.ActionMessage;
 import top.tonydon.syncplayer.message.common.MovieMessage;
 import top.tonydon.syncplayer.message.common.StringMessage;
 import top.tonydon.syncplayer.task.CountTask;
-import top.tonydon.syncplayer.util.AlertUtils;
-import top.tonydon.syncplayer.util.DurationUtils;
-import top.tonydon.syncplayer.util.JSONUtils;
-import top.tonydon.syncplayer.util.URIUtils;
+import top.tonydon.syncplayer.util.*;
 import top.tonydon.syncplayer.util.observer.ClientObserver;
+import uk.co.caprica.vlcj.factory.MediaPlayerFactory;
+import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface;
+import uk.co.caprica.vlcj.media.Media;
+import uk.co.caprica.vlcj.media.MediaEventAdapter;
+import uk.co.caprica.vlcj.media.Meta;
+import uk.co.caprica.vlcj.player.base.MediaPlayer;
+import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter;
+import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer;
 
 import java.io.File;
 import java.net.URI;
@@ -102,7 +105,7 @@ public class MainWindow {
     private Label volumeLabel;
     private Label selfNumberLabel;
     private Label timeLabel;
-    private MediaView mediaView;
+    private ImageView videoImageView;
     private Slider videoSlider;
     private Slider volumeSlider;
     private Spinner<Number> rateSpinner;
@@ -121,6 +124,9 @@ public class MainWindow {
 
     private String id;
 
+    private final MediaPlayerFactory FACTORY;
+    private final EmbeddedMediaPlayer PLAYER;
+
     public MainWindow(Stage primaryStage) {
         this.primaryStage = primaryStage;
         this.ROBOT = new Robot();
@@ -138,12 +144,43 @@ public class MainWindow {
         this.FULL_SCREEN_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/full_screen.png")).toString());
         this.SOUND_OPEN_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/sound_open.png")).toString());
         this.SOUND_CLOSE_ICON = new Image(Objects.requireNonNull(getClass().getResource("icon/sound_close.png")).toString());
+
+        this.rateSpinner = new Spinner<>(0.5, 2.5, 1, 0.05);
+        this.volumeSlider = new Slider(0, 100, 80);
+
+        this.FACTORY = new MediaPlayerFactory();
+        this.PLAYER = this.FACTORY.mediaPlayers().newEmbeddedMediaPlayer();
+        this.videoImageView = new ImageView();
     }
 
 
     private void setListener() {
         root.widthProperty().addListener((observable, oldValue, newValue) -> updateWidth(newValue.doubleValue()));
         root.heightProperty().addListener((observable, oldValue, newValue) -> updateHeight(newValue.doubleValue()));
+
+        // 时长进度条监听
+        videoSlider.setOnMousePressed(event -> mouse = true);
+        videoSlider.setOnMouseReleased(event -> {
+            mouse = false;
+            long millis = (long) videoSlider.getValue();
+            // 转换进度
+            PLAYER.controls().setTime(millis);
+            timeLabel.setText(TimeFormat.INSTANCE.getText(millis));
+        });
+
+        // 音量进度条监听
+        volumeSlider.valueProperty().addListener((observableValue, old, newVolume) -> {
+            int volume = newVolume.intValue();
+            PLAYER.audio().setVolume(volume);
+            volumeLabel.setText(volume + "%");
+        });
+
+        // 倍速输入框监听
+        rateSpinner.valueProperty().addListener((observableValue, number, newRate) -> {
+            float rate = newRate.floatValue();
+            PLAYER.controls().setRate(rate);
+            log.debug("set rate = {}", rate);
+        });
     }
 
     private void updateWidth(double width) {
@@ -152,12 +189,12 @@ public class MainWindow {
             double needHeight = width / 16 * 9;
             double currentHeight = root.getHeight() - 86;
             if (currentHeight >= needHeight) {
-                mediaView.setFitHeight(needHeight);
-                mediaView.setFitWidth(width);
+                videoImageView.setFitHeight(needHeight);
+                videoImageView.setFitWidth(width);
             } else {
                 double currentWidth = currentHeight / 9 * 16;
-                mediaView.setFitHeight(currentHeight);
-                mediaView.setFitWidth(currentWidth);
+                videoImageView.setFitHeight(currentHeight);
+                videoImageView.setFitWidth(currentWidth);
             }
         }
         // 菜单栏同步变化
@@ -173,12 +210,12 @@ public class MainWindow {
             double needWidth = height / 9 * 16;
             double currentWidth = root.getWidth();
             if (currentWidth >= needWidth) {
-                mediaView.setFitHeight(height);
-                mediaView.setFitWidth(needWidth);
+                videoImageView.setFitHeight(height);
+                videoImageView.setFitWidth(needWidth);
             } else {
                 double currentHeight = currentWidth / 16 * 9;
-                mediaView.setFitHeight(currentHeight);
-                mediaView.setFitWidth(currentWidth);
+                videoImageView.setFitHeight(currentHeight);
+                videoImageView.setFitWidth(currentWidth);
             }
         }
         videoPane.setPrefHeight(height);
@@ -205,8 +242,8 @@ public class MainWindow {
             if (newValue) {
                 videoPane.setLayoutY(0);
                 controlBox.setOpacity(0.8);
-                mediaView.setFitHeight(screenHeight);
-                mediaView.setFitWidth(screenWidth);
+                videoImageView.setFitHeight(screenHeight);
+                videoImageView.setFitWidth(screenWidth);
             } else {
                 // 恢复视频窗口尺寸
                 videoPane.setLayoutY(25);
@@ -224,10 +261,10 @@ public class MainWindow {
         // 启动任务
         COUNT_TASK.start();
         COUNT_TASK.addObserver((old, cur) -> {
+
             // 当视频正在播放时，每搁一段时间移动一下鼠标
             boolean isPlay = cur % ClientConstants.MOUSE_MOVE_INTERVAL == 0
-                    && mediaView.getMediaPlayer() != null
-                    && mediaView.getMediaPlayer().getStatus() == MediaPlayer.Status.PLAYING;
+                    && PLAYER.status().isPlaying();
             if (isPlay) {
                 Platform.runLater(() -> {
                     double mouseX = ROBOT.getMouseX();
@@ -244,7 +281,7 @@ public class MainWindow {
         });
 
         // 监听全屏鼠标移动
-        mediaView.setOnMouseMoved(event -> {
+        videoImageView.setOnMouseMoved(event -> {
             // 不是全屏状态下直接返回
             if (!primaryStage.isFullScreen()) return;
 
@@ -254,6 +291,50 @@ public class MainWindow {
             // 鼠标是否在控制栏附近
             isMouseBottom = event.getScreenY() > (screenHeight - 80);
             controlBox.setVisible(isMouseBottom);
+        });
+
+        PLAYER.events().addMediaPlayerEventListener(new MediaPlayerEventAdapter() {
+            @Override
+            public void timeChanged(MediaPlayer mediaPlayer, long newTime) {
+                if (!mouse) {
+                    Platform.runLater(() -> {
+                        videoSlider.setValue(newTime);
+                        timeLabel.setText(TimeFormat.INSTANCE.getText(newTime));
+                    });
+
+                    // 当播放结束时暂停
+                    double temp = mediaPlayer.media().info().duration() - newTime;
+                    if (temp <= 120) {
+                        pause();
+                    }
+                }
+            }
+        });
+
+        PLAYER.events().addMediaEventListener(new MediaEventAdapter() {
+            @Override
+            public void mediaMetaChanged(Media media, Meta metaType) {
+                // 1. 按钮解禁
+                flushUI(UI.OPEN_VIDEO);
+
+                // 设置时长进度条
+                long total = media.info().duration();
+                videoSlider.setMax(total);
+                videoSlider.setVisible(true);
+                TimeFormat.INSTANCE.setTotal(total);
+                Platform.runLater(() -> {
+                    timeLabel.setText(TimeFormat.INSTANCE.getText(0));
+                });
+
+                // 设置初始音量
+                PLAYER.audio().setVolume(VideoConstants.DEFAULT_VOLUME);
+
+                // 设置初始倍速
+                PLAYER.controls().setRate(VideoConstants.DEFAULT_RATE);
+
+                // 3. 设置视频点击播放/暂停
+                videoImageView.setOnMouseClicked(e2 -> playOrPause(null));
+            }
         });
     }
 
@@ -315,8 +396,14 @@ public class MainWindow {
         videoPane.setLayoutY(25);
         videoPane.setBackground(Background.fill(Color.rgb(16, 16, 16)));
         videoPane.setAlignment(Pos.CENTER);
-        mediaView = new MediaView();
-        videoPane.getChildren().add(mediaView);
+
+
+//        mediaView = new MediaView();
+        this.videoImageView.setPreserveRatio(true);
+        this.PLAYER.videoSurface().set(new ImageViewVideoSurface(this.videoImageView));
+
+
+        videoPane.getChildren().add(this.videoImageView);
         root.getChildren().add(videoPane);
     }
 
@@ -340,14 +427,6 @@ public class MainWindow {
         videoSlider = new Slider();
         videoSlider.setDisable(true);
         videoControlBox.getChildren().add(videoSlider);
-        // 进度条的监听事件
-        videoSlider.setOnMousePressed(event -> mouse = true);
-        videoSlider.setOnMouseReleased(event -> {
-            mouse = false;
-            Duration duration = Duration.seconds(videoSlider.getValue());
-            mediaView.getMediaPlayer().seek(duration);
-            timeLabel.setText(DurationUtils.getText(duration));
-        });
     }
 
     // 底部控制栏
@@ -485,10 +564,9 @@ public class MainWindow {
         syncPane.setDisable(true);
         syncPane.setOpacity(0.6);
         syncPane.setOnMouseClicked(event -> {
-            MediaPlayer player = mediaView.getMediaPlayer();
-            double seconds = player.getCurrentTime().toSeconds();
-            double rate = player.getRate();
-            client.send(new MovieMessage(ActionCode.MOVIE_SYNC, seconds, rate).toJson());
+            long milliseconds = PLAYER.status().time();
+            float rate = PLAYER.status().rate();
+            client.send(new MovieMessage(ActionCode.MOVIE_SYNC, milliseconds, rate).toJson());
         });
 
         syncImage = new ImageView(this.SYNC_BLACK_ICON);
@@ -531,38 +609,30 @@ public class MainWindow {
             if (isMute) {
                 soundImage.setImage(SOUND_OPEN_ICON);
                 if (hasMedia()) {
-                    mediaView.getMediaPlayer().setMute(false);
+                    PLAYER.audio().setMute(false);
                 }
             } else {
                 soundImage.setImage(SOUND_CLOSE_ICON);
                 if (hasMedia()) {
-                    mediaView.getMediaPlayer().setMute(true);
+                    PLAYER.audio().setMute(true);
                 }
             }
             isMute = !isMute;
         });
 
         hBox.getChildren().add(pane);
-        volumeSlider = new Slider();
-        volumeSlider.setMax(1);
-        volumeSlider.setValue(0.8);
+
         hBox.getChildren().add(volumeSlider);
         volumeLabel = new Label("80%");
         volumeLabel.setAlignment(Pos.CENTER_RIGHT);
         volumeLabel.setPrefWidth(40);
         volumeLabel.setFont(new Font(15));
         hBox.getChildren().add(volumeLabel);
-        // 3. 音量进度条和 Label 绑定
-        volumeSlider.valueProperty().addListener((observableValue, number, t1) -> {
-            String label = (int) (t1.doubleValue() * 100) + "%";
-            volumeLabel.setText(label);
-        });
         gridPane.add(hBox, 5, 0);
     }
 
     // 倍速组件
     private void setRateItem(GridPane gridPane) {
-        rateSpinner = new Spinner<>(0.5, 2.5, 1, 0.05);
         rateSpinner.setDisable(true);
         rateSpinner.setEditable(true);
         rateSpinner.setPrefWidth(80);
@@ -728,7 +798,7 @@ public class MainWindow {
                 }
                 // 解禁同步图标
                 syncImage.setImage(SYNC_BLUE_ICON);
-                if (mediaView.getMediaPlayer() != null) {
+                if (PLAYER.media().isValid()) {
                     syncPane.setDisable(false);
                     syncPane.setOpacity(1);
                 }
@@ -759,27 +829,27 @@ public class MainWindow {
 
     // 处理电影消息
     private void doMovie(MovieMessage message) {
-        MediaPlayer player = mediaView.getMediaPlayer();
+//        MediaPlayer player = mediaView.getMediaPlayer();
         // 如果视频没有加载，则不做处理
-        if (player == null) {
+        if (!PLAYER.media().isValid()) {
             log.info("视频尚未加载！");
             return;
         }
         if (message.getActionCode() == ActionCode.MOVIE_PLAY) {
-            player.play();
+            PLAYER.controls().play();
             playImage.setImage(PAUSE_BLUE_ICON);
         } else if (message.getActionCode() == ActionCode.MOVIE_PAUSE) {
-            player.pause();
+            PLAYER.controls().pause();
             playImage.setImage(PLAY_BLUE_ICON);
         } else if (message.getActionCode() == ActionCode.MOVIE_STOP) {
-            player.stop();
+            PLAYER.controls().stop();
             playImage.setImage(PLAY_BLUE_ICON);
         } else if (message.getActionCode() == ActionCode.MOVIE_SYNC) {
-            player.seek(Duration.seconds(message.getSeconds()));
-            player.setRate(message.getRate());
-            player.play();
+            PLAYER.controls().setTime(message.getMilliseconds());
+            PLAYER.controls().setRate(message.getRate());
+            PLAYER.controls().play();
             playImage.setImage(PAUSE_BLUE_ICON);
-            log.info("同步播放 -- 进度：{}，倍速：{}", DurationUtils.getText(message.getSeconds()), message.getRate());
+            log.info("同步播放 -- 进度：{}，倍速：{}", DurationUtils.getText(message.getMilliseconds()), message.getRate());
         }
     }
 
@@ -855,32 +925,31 @@ public class MainWindow {
     }
 
     private boolean isPlaying() {
-        MediaPlayer player = mediaView.getMediaPlayer();
-        return player != null && player.getStatus() == MediaPlayer.Status.PLAYING;
+        return PLAYER.media().isValid() && PLAYER.status().isPlaying();
     }
 
     private boolean hasMedia() {
-        return mediaView.getMediaPlayer() != null;
+        return PLAYER.media().isValid();
     }
 
     // 播放
-    public void play(MediaPlayer player) {
+    public void play() {
         if (isBind()) {
             client.send(MovieMessage.MOVIE_PLAY.toJson());
             playImage.setImage(this.PAUSE_BLUE_ICON);
         } else {
-            player.play();
+            PLAYER.controls().play();
             playImage.setImage(this.PAUSE_BLACK_ICON);
         }
     }
 
     // 暂停播放
-    public void pause(MediaPlayer player) {
+    public void pause() {
         if (isBind()) {
             client.send(MovieMessage.MOVIE_PAUSE.toJson());
             playImage.setImage(this.PLAY_BLUE_ICON);
         } else {
-            player.pause();
+            PLAYER.controls().pause();
             playImage.setImage(this.PLAY_BLACK_ICON);
         }
     }
@@ -890,11 +959,10 @@ public class MainWindow {
         if (event != null && event.getButton() != MouseButton.PRIMARY) {
             return;
         }
-        MediaPlayer player = mediaView.getMediaPlayer();
         if (isPlaying()) {
-            pause(player);
+            pause();
         } else {
-            play(player);
+            play();
         }
     }
 
@@ -903,97 +971,28 @@ public class MainWindow {
     private void openVideo() {
         // 创建文件选择器
         FileChooser fileChooser = new FileChooser();
-        // 设置过滤器，第一个参数是描述文本，第二个参数是过滤规则
-        FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter("mp4/flv", "*.mp4", "*.flv");
-        fileChooser.getExtensionFilters().add(filter);          // 添加过滤器
-        File file = fileChooser.showOpenDialog(primaryStage);   // 打开文件选择器，返回选择的文件
 
-        // 如果未选择文件，直接返回
-        if (file == null) return;
+        // 添加过滤器
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("视频文件", VideoConstants.VIDEO_FILTER));
 
-        // 如果之前已经选择了视频，则销毁之前的视频
-        if (mediaView.getMediaPlayer() != null) {
-            mediaView.getMediaPlayer().dispose();
-            flushUI(UI.CLOSE_VIDEO);
-            log.info("视频销毁成功");
-        }
+        // 打开文件选择器，返回选择的文件
+        File file = fileChooser.showOpenDialog(primaryStage);
 
-        // 将文件转为 uri 路径，加载媒体视频
-        String uri = URIUtils.encoder("file:" + file.toPath().toUri().getPath());
-        log.info(uri);
-
-        // 加载视频
-        loadVideo(uri, 0);
-    }
-
-    private void loadVideo(String uri, int count) {
-        // 重复次数，最多重复3次
-        count++;
-        if (count >= 4) {
-            AlertUtils.warning("视频加载开了会小差，再试一次吧。", primaryStage);
-            log.error("视频加载三次失败！");
+        if (file == null) {
             return;
         }
 
-        final int finalCount = count;
-        // 开启新线程加载视频
-        new Thread(() -> {
-            MediaPlayer mediaPlayer;
-            try {
-                mediaPlayer = new MediaPlayer(new Media(uri));
-            } catch (Exception exception) {
-                exception.printStackTrace();
-                AlertUtils.error(exception.getMessage(), primaryStage);
-                return;
-            }
+        // 将文件转为 uri 路径，加载媒体视频
+        String uri = URIUtils.encoder(file.toPath().toUri().getPath());
+        log.info(uri);
 
-            mediaView.setMediaPlayer(mediaPlayer);
+        // 加载视频
+        loadVideo(uri);
+    }
 
-            // 3. 媒体加载完毕后
-            mediaPlayer.setOnReady(() -> {
-                // 1. 按钮解禁
-                flushUI(UI.OPEN_VIDEO);
-
-                // 2. 设置进度条
-                Duration totalDuration = mediaPlayer.getTotalDuration();
-                videoSlider.setMax(totalDuration.toSeconds());
-                videoSlider.setVisible(true);
-                mediaPlayer.currentTimeProperty().addListener((observable, oldValue, newValue) -> {
-                    if (!mouse) {
-                        videoSlider.setValue(newValue.toSeconds());
-                        timeLabel.setText(DurationUtils.getText(newValue));
-
-                        // 当播放结束时暂停
-                        double temp = totalDuration.toMillis() - newValue.toMillis();
-                        if (temp <= 120) {
-                            pause(mediaPlayer);
-                        }
-                    }
-                });
-
-                // 绑定音量进度条
-                mediaPlayer.volumeProperty().bind(volumeSlider.valueProperty());
-                // 绑定倍速
-                mediaPlayer.rateProperty().bindBidirectional(rateSpinner.getValueFactory().valueProperty());
-
-                // 3. 设置视频点击播放/暂停
-                mediaView.setOnMouseClicked(e2 -> playOrPause(null));
-
-                // 设置进度显示
-                DurationUtils.setTotal(totalDuration);
-                timeLabel.setText(DurationUtils.getText(0));
-
-                // 设置是否静音
-                mediaPlayer.setMute(isMute);
-
-                log.info("视频加载成功");
-            });
-
-            mediaPlayer.setOnError(() -> {
-                log.warn("视频加载错误，尝试第" + finalCount + "次重新加载...");
-                loadVideo(uri, finalCount);
-            });
-        }).start();
+    private void loadVideo(String uri) {
+        PLAYER.media().prepare(uri);
+        PLAYER.media().parsing().parse();
     }
 
     private void showBulletScreen(String content, Color color) {
@@ -1007,11 +1006,11 @@ public class MainWindow {
         double textWidth = text.getLayoutBounds().getWidth();
         double textHeight = text.getLayoutBounds().getHeight();
         // 设置 y 坐标
-        text.setY((new Random().nextInt(4) + 1) * textHeight);
+        text.setY(25 + (new Random().nextInt(5) + 1) * textHeight);
         root.getChildren().add(text);
 
-        double width = mediaView.getFitWidth();
-        double layoutX = mediaView.getLayoutX();
+        double width = videoImageView.getFitWidth();
+        double layoutX = videoImageView.getLayoutX();
 //        log.debug("width = {}, layoutX = {}", width, layoutX);
 
         // 创建动画
@@ -1046,10 +1045,10 @@ public class MainWindow {
             }
         }
         // 销毁媒体
-        if (mediaView.getMediaPlayer() != null) {
-            mediaView.getMediaPlayer().dispose();
-            log.info("销毁视频");
-        }
+        PLAYER.controls().stop();
+        PLAYER.release();
+        FACTORY.release();
+        log.info("销毁视频");
         // 关闭任务
         COUNT_TASK.stop();
         log.debug("结束计时任务");

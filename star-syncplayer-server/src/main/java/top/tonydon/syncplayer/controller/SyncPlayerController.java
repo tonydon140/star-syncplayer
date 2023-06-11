@@ -13,11 +13,6 @@ import java.util.Map;
 @RequestMapping("/syncplayer")
 public class SyncPlayerController {
 
-    @RequestMapping("/count")
-    public ResponseResult getCount() {
-        return ResponseResult.success(SyncPlayerItem. PLAYER_ITEM_MAP.size());
-    }
-
     @RequestMapping("/map")
     public ResponseResult getMap() {
         Map<String, String> map = new HashMap<>();

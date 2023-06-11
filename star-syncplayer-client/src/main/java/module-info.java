@@ -10,6 +10,9 @@ module top.tonydon {
     requires ch.qos.logback.classic;
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;
+    requires kotlin.stdlib;
+    requires uk.co.caprica.vlcj;
+    requires uk.co.caprica.vlcj.javafx;
 
     opens top.tonydon.syncplayer to javafx.graphics;
 
