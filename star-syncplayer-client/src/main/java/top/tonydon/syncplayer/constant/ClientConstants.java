@@ -7,8 +7,8 @@ public class ClientConstants {
     public static final String EXAMPLE_URL = "ws://www.example.com:8888/websocket";
 
 //    public static final String DEFAULT_URL = "wss://www.tonydon.top:6515/syncplayer";
-    public static final String DEFAULT_URL = "ws://localhost:6515/syncplayer";
-//    public static final String DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer";
+//    public static final String DEFAULT_URL = "ws://localhost:6515/syncplayer";
+    public static final String DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer";
 
     public static final String CHECK_UPDATE_URL = "https://tonydon.top:6515/project-version/latest/1";
 
