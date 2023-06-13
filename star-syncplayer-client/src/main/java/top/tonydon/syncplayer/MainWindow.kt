@@ -32,7 +32,7 @@ import javafx.util.Duration
 import org.slf4j.LoggerFactory
 import top.tonydon.syncplayer.client.WebClient
 import top.tonydon.syncplayer.constant.ClientConstants
-import top.tonydon.syncplayer.constant.UI
+import top.tonydon.syncplayer.constant.UIState
 import top.tonydon.syncplayer.constant.VideoConstants
 import top.tonydon.syncplayer.entity.VersionResult
 import top.tonydon.syncplayer.exception.HttpException
@@ -48,6 +48,7 @@ import top.tonydon.syncplayer.util.TimeFormat.getText
 import top.tonydon.syncplayer.util.TimeFormat.setTotal
 import top.tonydon.syncplayer.util.URIUtils
 import top.tonydon.syncplayer.util.observer.ClientObserver
+import top.tonydon.syncplayer.util.observer.CountObserver
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface
 import uk.co.caprica.vlcj.media.Media
@@ -228,25 +229,26 @@ class MainWindow(private val primaryStage: Stage) {
 
         // 启动任务
         countTask.start()
-        countTask.addObserver { _, cur ->
-
-            // 当视频正在播放时，每搁一段时间移动一下鼠标
-            val isPlay = (cur % ClientConstants.MOUSE_MOVE_INTERVAL == 0
-                    && player.status().isPlaying)
-            if (isPlay) {
-                Platform.runLater {
-                    val mouseX = robot.mouseX
-                    val mouseY = robot.mouseY
-                    robot.mouseMove(mouseX + 1, mouseY + 1)
-                    robot.mouseMove(mouseX, mouseY)
-                    log.debug("mouse move")
+        countTask.addObserver(object : CountObserver{
+            override fun countChange(old: Int, cur: Int) {
+                // 当视频正在播放时，每搁一段时间移动一下鼠标
+                val isPlay = (cur % ClientConstants.MOUSE_MOVE_INTERVAL == 0
+                        && player.status().isPlaying)
+                if (isPlay) {
+                    Platform.runLater {
+                        val mouseX = robot.mouseX
+                        val mouseY = robot.mouseY
+                        robot.mouseMove(mouseX + 1, mouseY + 1)
+                        robot.mouseMove(mouseX, mouseY)
+                        log.debug("mouse move")
+                    }
                 }
-            }
 
-            // 全屏状态下、鼠标不在控制栏附近、鼠标指针没有隐藏，则每隔大约两秒隐藏鼠标
-            if (primaryStage.isFullScreen && !isMouseBottom && primaryScene!!.cursor !== Cursor.NONE && cur % 2 == 0)
-                primaryScene!!.cursor = Cursor.NONE
-        }
+                // 全屏状态下、鼠标不在控制栏附近、鼠标指针没有隐藏，则每隔大约两秒隐藏鼠标
+                if (primaryStage.isFullScreen && !isMouseBottom && primaryScene!!.cursor !== Cursor.NONE && cur % 2 == 0)
+                    primaryScene!!.cursor = Cursor.NONE
+            }
+        })
 
         // 监听全屏鼠标移动
         videoImageView.onMouseMoved = EventHandler { event: MouseEvent ->
@@ -280,7 +282,7 @@ class MainWindow(private val primaryStage: Stage) {
         player.events().addMediaEventListener(object : MediaEventAdapter() {
             override fun mediaMetaChanged(media: Media, metaType: Meta) {
                 // 1. 按钮解禁
-                flushUI(UI.OPEN_VIDEO)
+                flushUI(UIState.OPEN_VIDEO)
 
                 // 设置时长进度条
                 val total = media.info().duration()
@@ -457,7 +459,7 @@ class MainWindow(private val primaryStage: Stage) {
                 if (result.isPresent && result.get() == ButtonType.OK) {
                     // 发送解除绑定消息
                     client!!.send(ActionMessage.UNBIND.toJson())
-                    flushUI(UI.UN_BIND)
+                    flushUI(UIState.UN_BIND)
                     isBind = false
                 }
             } else {
@@ -586,7 +588,7 @@ class MainWindow(private val primaryStage: Stage) {
             log.info("server connection closed")
             isConnection = false
             isBind = false
-            flushUI(UI.CLOSED_SERVER)
+            flushUI(UIState.CLOSED_SERVER)
         } catch (e: InterruptedException) {
             throw RuntimeException(e)
         }
@@ -604,6 +606,7 @@ class MainWindow(private val primaryStage: Stage) {
                 if (!flag) {
                     client = null
                     log.error("server connection fail!")
+
                     if (isCustom) AlertUtils.error(
                         "自定义服务器连接失败！请检查服务器地址是否正确，或联系服务器作者！",
                         primaryStage
@@ -613,7 +616,7 @@ class MainWindow(private val primaryStage: Stage) {
 
                 // 连接成功
                 isConnection = true
-                Platform.runLater { flushUI(UI.CONNECTED_SERVER) }
+                Platform.runLater { flushUI(UIState.CONNECTED_SERVER) }
 
                 // 添加观察者
                 client!!.addObserver(object : ClientObserver {
@@ -679,14 +682,14 @@ class MainWindow(private val primaryStage: Stage) {
             // 解除绑定
             isBind = false
             // 更新 UI
-            Platform.runLater { flushUI(UI.UN_BIND) }
+            Platform.runLater { flushUI(UIState.UN_BIND) }
             AlertUtils.information("另一半断开连接！", primaryStage)
             log.info("与另一半解除绑定！")
         } else if (code == ActionCode.UNBIND) {
             // 解除绑定
             isBind = false
             // 更新 UI
-            Platform.runLater { flushUI(UI.UN_BIND) }
+            Platform.runLater { flushUI(UIState.UN_BIND) }
             AlertUtils.information("另一半解除绑定！", primaryStage)
             log.info("与另一半解除绑定！")
         }
@@ -779,7 +782,7 @@ class MainWindow(private val primaryStage: Stage) {
     // 刷新 UI
     private fun flushUI(code: Int) {
         when (code) {
-            UI.UN_BIND -> {
+            UIState.UN_BIND -> {
                 // 清空另一半的星星号
                 friendInput.text = ""
                 // 更换断开连接图标为连接图标
@@ -796,7 +799,7 @@ class MainWindow(private val primaryStage: Stage) {
                 syncImage.image = syncBlackIcon
             }
 
-            UI.OPEN_VIDEO -> {
+            UIState.OPEN_VIDEO -> {
                 playPane.isDisable = false
                 playPane.opacity = 1.0
                 videoSlider.isDisable = false
@@ -810,7 +813,7 @@ class MainWindow(private val primaryStage: Stage) {
                 }
             }
 
-            UI.CLOSE_VIDEO -> {
+            UIState.CLOSE_VIDEO -> {
                 playPane.isDisable = true
                 playPane.opacity = 0.6
                 videoSlider.isDisable = true
@@ -823,7 +826,7 @@ class MainWindow(private val primaryStage: Stage) {
                 syncImage.image = syncBlackIcon
             }
 
-            UI.CONNECTED_SERVER -> {
+            UIState.CONNECTED_SERVER -> {
                 bindPane.isDisable = false
                 bindPane.opacity = 1.0
                 closeServerItem.isDisable = false
@@ -831,8 +834,8 @@ class MainWindow(private val primaryStage: Stage) {
                 connectCustomServerItem.isDisable = true
             }
 
-            UI.CLOSED_SERVER -> {
-                flushUI(UI.UN_BIND)
+            UIState.CLOSED_SERVER -> {
+                flushUI(UIState.UN_BIND)
                 bindPane.isDisable = true
                 bindPane.opacity = 0.6
                 closeServerItem.isDisable = true
