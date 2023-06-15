@@ -24,7 +24,7 @@ public class ActionCode {
     public static final int ROOM_CREATED = 205;
     public static final int ADD_ROOM = 206;
     public static final int CHAT = 207;
-
+    public static final int SEND_HEARTBEAT = 208;
 
 
     /**************************************************************************
@@ -36,5 +36,6 @@ public class ActionCode {
     public static final int MOVIE_PAUSE = 302;
     public static final int MOVIE_STOP = 303;
     public static final int MOVIE_SYNC = 304;
+
 
 }

@@ -1031,8 +1031,11 @@ class MainWindow(private val primaryStage: Stage) {
                     is HttpConnectTimeoutException -> checkUpdate(false)
                     is HttpTimeoutException -> AlertUtils.error("请求超时", "网络请求超时，请稍后再试。", primaryStage)
                     else -> {
-                        // HTTP 错误、连接错误、等等
-                        AlertUtils.error("网络错误", "检查更新发生错误，请稍后再试。", primaryStage)
+                        val content =
+                            "检查更新发生错误，请前往Github或者Gitee手动检查更新，或者联系作者。\n" +
+                                    "Github: https://github.com/tonydon140/star-syncplayer \n" +
+                                    "Gitee: https://gitee.com/shuilanjiao/star-syncplayer"
+                        AlertUtils.error("未知错误", content, primaryStage)
                     }
                 }
                 null

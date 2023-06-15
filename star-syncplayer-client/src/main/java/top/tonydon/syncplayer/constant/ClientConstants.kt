@@ -4,9 +4,9 @@ object ClientConstants {
     const val ID_LENGTH = 6
     const val EXAMPLE_URL = "ws://www.example.com:8888/websocket"
 
-    const val DEFAULT_URL = "ws://localhost:6515/syncplayer"
+//    const val DEFAULT_URL = "ws://localhost:6515/syncplayer"
 //    const val DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer"
-//    const val DEFAULT_URL = "wss://www.tonydon.top:6515/syncplayer"
+    const val DEFAULT_URL = "wss://www.tonydon.top:6515/syncplayer"
 
 //    const val CHECK_UPDATE_URL = "http://localhost:6515/project-version/latest/1"
     const val CHECK_UPDATE_URL = "https://tonydon.top:6515/project-version/latest/1"
