@@ -34,6 +34,7 @@ import top.tonydon.syncplayer.client.WebClient
 import top.tonydon.syncplayer.constant.ClientConstants
 import top.tonydon.syncplayer.constant.UIState
 import top.tonydon.syncplayer.constant.VideoConstants
+import top.tonydon.syncplayer.entity.ProjectVersion
 import top.tonydon.syncplayer.entity.VersionResult
 import top.tonydon.syncplayer.exception.HttpException
 import top.tonydon.syncplayer.exception.ResultException
@@ -196,6 +197,8 @@ class MainWindow(private val primaryStage: Stage) {
         primaryScene = root.scene
         // 获取 host
         hostServices = application.hostServices
+        // 检查更新
+        checkUpdate(true)
         // 连接服务器
         connectServer(ClientConstants.DEFAULT_URL)
         // 请求焦点
@@ -229,7 +232,7 @@ class MainWindow(private val primaryStage: Stage) {
 
         // 启动任务
         countTask.start()
-        countTask.addObserver(object : CountObserver{
+        countTask.addObserver(object : CountObserver {
             override fun countChange(old: Int, cur: Int) {
                 // 当视频正在播放时，每搁一段时间移动一下鼠标
                 val isPlay = (cur % ClientConstants.MOUSE_MOVE_INTERVAL == 0
@@ -340,7 +343,7 @@ class MainWindow(private val primaryStage: Stage) {
         val aboutItem = MenuItem("关于")
         helpMenu.items.add(updateItem)
         helpMenu.items.add(aboutItem)
-        updateItem.setOnAction { checkUpdate() }
+        updateItem.setOnAction { checkUpdate(false) }
         aboutItem.setOnAction { about() }
         menuBar.menus.add(openVideoMenu)
         menuBar.menus.add(serverMenu)
@@ -570,7 +573,7 @@ class MainWindow(private val primaryStage: Stage) {
         val pane = AnchorPane()
         pane.cursor = Cursor.HAND
         pane.children.add(ImageView(fullScreenIcon))
-        pane.setOnMouseClicked{ event: MouseEvent ->
+        pane.setOnMouseClicked { event: MouseEvent ->
             // 鼠标左键点击有效
             if (event.button != MouseButton.PRIMARY) return@setOnMouseClicked
 
@@ -677,21 +680,30 @@ class MainWindow(private val primaryStage: Stage) {
 
     // 处理 ActionMessage
     private fun doAction(code: Int) {
-        // 另一半下线
-        if (code == ActionCode.OFFLINE) {
-            // 解除绑定
-            isBind = false
-            // 更新 UI
-            Platform.runLater { flushUI(UIState.UN_BIND) }
-            AlertUtils.information("另一半断开连接！", primaryStage)
-            log.info("与另一半解除绑定！")
-        } else if (code == ActionCode.UNBIND) {
-            // 解除绑定
-            isBind = false
-            // 更新 UI
-            Platform.runLater { flushUI(UIState.UN_BIND) }
-            AlertUtils.information("另一半解除绑定！", primaryStage)
-            log.info("与另一半解除绑定！")
+        when (code) {
+            // 另一半下线
+            ActionCode.OFFLINE -> {
+                // 解除绑定
+                isBind = false
+                // 更新 UI
+                Platform.runLater { flushUI(UIState.UN_BIND) }
+                AlertUtils.information("另一半断开连接！", primaryStage)
+                log.info("与另一半解除绑定！")
+            }
+
+            ActionCode.UNBIND -> {
+                // 解除绑定
+                isBind = false
+                // 更新 UI
+                Platform.runLater { flushUI(UIState.UN_BIND) }
+                AlertUtils.information("另一半解除绑定！", primaryStage)
+                log.info("与另一半解除绑定！")
+            }
+
+            ActionCode.HEARTBEAT -> {
+                log.debug("server heartbeat")
+
+            }
         }
     }
 
@@ -973,8 +985,9 @@ class MainWindow(private val primaryStage: Stage) {
         log.info("客户端关闭")
     }
 
+
     // 检查更新
-    private fun checkUpdate() {
+    private fun checkUpdate(isAutoCheck: Boolean) {
         log.debug("check update...")
 
         // 创建 HTTP 请求
@@ -994,32 +1007,19 @@ class MainWindow(private val primaryStage: Stage) {
                     throw HttpException(response.statusCode())
                 }
                 response.body()
-            }.thenAccept { body: String? ->
+            }.thenApply { body: String? ->
                 // 解析 JSON
                 val result = JSONUtils.parse(body, VersionResult::class.java)
-                val version = result.data
-
                 // 如果 code 不是 200，抛出结果异常
                 if (result.code != 200) {
                     throw ResultException(result.msg)
                 }
-
-                // 有新版本
-                if (version.versionNumber > ClientConstants.VERSION_NUMBER) {
-                    Platform.runLater {
-                        val alert = Alert(Alert.AlertType.CONFIRMATION)
-                        alert.headerText = "发现新版本" + version.version + "！是否前往下载？"
-                        alert.contentText = version.description
-                        alert.initModality(Modality.WINDOW_MODAL)
-                        alert.initOwner(primaryStage)
-                        alert.showAndWait()
-                            .filter { buttonType: ButtonType -> buttonType == ButtonType.OK }
-                            .ifPresent { hostServices!!.showDocument(ClientConstants.LATEST_URL) }
-                    }
-                } else {
-                    AlertUtils.information("当前版本" + ClientConstants.VERSION + "已是最新版本！", "", primaryStage)
-                }
-            }.exceptionally { throwable: Throwable ->
+                // 返回 ProjectVersion
+                result.data
+            }.thenAccept {
+                handleUpdate(it, isAutoCheck)
+            }
+            .exceptionally { throwable: Throwable ->
                 // 捕获异常
                 val ex = throwable.cause
                 throwable.printStackTrace()
@@ -1028,7 +1028,7 @@ class MainWindow(private val primaryStage: Stage) {
                 // 鉴别异常类型
                 when (ex) {
                     is ResultException -> AlertUtils.error("请求出错", ex.message, primaryStage)
-                    is HttpConnectTimeoutException -> checkUpdate()
+                    is HttpConnectTimeoutException -> checkUpdate(false)
                     is HttpTimeoutException -> AlertUtils.error("请求超时", "网络请求超时，请稍后再试。", primaryStage)
                     else -> {
                         // HTTP 错误、连接错误、等等
@@ -1038,6 +1038,49 @@ class MainWindow(private val primaryStage: Stage) {
                 null
             }
     }
+
+    // 处理请求结果
+    private fun handleUpdate(version: ProjectVersion, isAutoCheck: Boolean) {
+        // 判断是否有新版本，不接受Beta版本更新
+        if (version.versionNumber <= ClientConstants.VERSION_NUMBER || version.isBeta) {
+            if (!isAutoCheck)
+                AlertUtils.information("当前版本" + ClientConstants.VERSION + "已是最新版本！", "", primaryStage)
+            return
+        }
+
+        var headerText = "检测到新版本：${version.version}！"
+        val alertType: Alert.AlertType
+        if (version.isForced) {
+            // 强制更新
+            headerText += "新版本为强制更新，否则无法使用，请立即更新！"
+            alertType = Alert.AlertType.INFORMATION
+        } else {
+            // 判断兼容旧版本更新
+            headerText += if (version.isCompatible) "是否前往下载？" else "新版本不兼容旧版本，请尽快更新！"
+            alertType = Alert.AlertType.CONFIRMATION
+        }
+        Platform.runLater {
+            val alert = Alert(alertType)
+            alert.headerText = headerText
+            alert.contentText = version.description
+            alert.initModality(Modality.WINDOW_MODAL)
+            alert.initOwner(primaryStage)
+            val optional = alert.showAndWait()
+            // 如果是强制更新，退出软件
+            if (version.isForced) {
+                if (optional.isPresent)
+                // 点击确定，打开更新网页
+                    hostServices!!.showDocument(ClientConstants.LATEST_URL)
+                // 关闭软件
+                primaryStage.close()
+            } else {
+                optional
+                    .filter { buttonType: ButtonType -> buttonType == ButtonType.OK }
+                    .ifPresent { hostServices!!.showDocument(ClientConstants.LATEST_URL) }
+            }
+        }
+    }
+
 
     /**
      * 打开软件官网

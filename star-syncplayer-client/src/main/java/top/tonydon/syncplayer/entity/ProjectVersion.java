@@ -10,23 +10,12 @@ public class ProjectVersion {
     private String version;
     private Integer versionNumber;
     private String description;
+    private Boolean isForced;       // 是否强制更新，默认false
+    private Boolean isBeta;         // 是否是beta版本，默认false
+    private Boolean isCompatible;   // 否兼容旧版本，默认true
 
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
-
-    @Override
-    public String toString() {
-        return "ProjectVersion{" +
-                "id=" + id +
-                ", projectId=" + projectId +
-                ", projectName='" + projectName + '\'' +
-                ", version='" + version + '\'' +
-                ", versionNumber=" + versionNumber +
-                ", description='" + description + '\'' +
-                ", createTime=" + createTime +
-                ", updateTime=" + updateTime +
-                '}';
-    }
 
     public Long getId() {
         return id;
@@ -76,6 +65,33 @@ public class ProjectVersion {
         this.description = description;
     }
 
+    public Boolean getIsForced() {
+        return isForced;
+    }
+
+    public ProjectVersion setIsForced(Boolean forced) {
+        isForced = forced;
+        return this;
+    }
+
+    public Boolean getIsBeta() {
+        return isBeta;
+    }
+
+    public ProjectVersion setIsBeta(Boolean beta) {
+        isBeta = beta;
+        return this;
+    }
+
+    public Boolean getIsCompatible() {
+        return isCompatible;
+    }
+
+    public ProjectVersion setIsCompatible(Boolean compatible) {
+        isCompatible = compatible;
+        return this;
+    }
+
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -90,6 +106,23 @@ public class ProjectVersion {
 
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
+    }
+
+    @Override
+    public String toString() {
+        return "ProjectVersion{" +
+                "id=" + id +
+                ", projectId=" + projectId +
+                ", projectName='" + projectName + '\'' +
+                ", version='" + version + '\'' +
+                ", versionNumber=" + versionNumber +
+                ", description='" + description + '\'' +
+                ", isForced=" + isForced +
+                ", isBeta=" + isBeta +
+                ", isCompatible=" + isCompatible +
+                ", createTime=" + createTime +
+                ", updateTime=" + updateTime +
+                '}';
     }
 }
 
