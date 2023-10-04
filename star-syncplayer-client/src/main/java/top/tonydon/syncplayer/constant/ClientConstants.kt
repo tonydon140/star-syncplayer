@@ -12,7 +12,7 @@ object ClientConstants {
 
     const val LATEST_URL = "https://gitee.com/shuilanjiao/star-syncplayer/releases"
     const val VLC_DOWNLOAD_URL = "https://www.videolan.org/vlc/index.zh_CN.html"
-    const val ABOUT_URL = "https://www.tonydon.top/article/8"
+    const val ABOUT_URL = "https://shuilanjiao.gitee.io/p/2023/10/star-syncplayer/"
     const val URL_REG = "^(wss|ws)://[\\S]+"
     const val VERSION = "v2.1.0"
 
