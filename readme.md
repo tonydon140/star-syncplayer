@@ -16,8 +16,8 @@
 
 在 Github 或者 Gitee 的发行版中下载最新版本
 
-- https://github.com/tonydon140/star-movie/releases
-- https://gitee.com/shuilanjiao/star-movie/releases
+- https://github.com/tonydon140/star-syncplayer/releases
+- https://gitee.com/shuilanjiao/star-syncplayer/releases
 
 下载并解压压缩包，直接运行【StarSyncplayer.exe】即可。
 
