@@ -83,9 +83,7 @@ public class SyncPlayerItem {
     // 处理错误
     @OnError
     public void onError(Throwable error) {
-        log.error("id = {}, error message = {}", id, error.getMessage());
-        log.error("id = {}, error = {}", id, error);
-        error.printStackTrace();
+        log.error("id = {}, error = {}", id, error.toString());
         // 发生异常关闭连接
         onClose();
     }

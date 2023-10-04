@@ -1,5 +1,6 @@
 package top.tonydon.syncplayer
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import javafx.animation.KeyFrame
 import javafx.animation.KeyValue
 import javafx.animation.Timeline
@@ -34,8 +35,7 @@ import top.tonydon.syncplayer.client.WebClient
 import top.tonydon.syncplayer.constant.ClientConstants
 import top.tonydon.syncplayer.constant.UIState
 import top.tonydon.syncplayer.constant.VideoConstants
-import top.tonydon.syncplayer.entity.ProjectVersion
-import top.tonydon.syncplayer.entity.VersionResult
+import top.tonydon.syncplayer.entity.VersionInfo
 import top.tonydon.syncplayer.exception.HttpException
 import top.tonydon.syncplayer.exception.ResultException
 import top.tonydon.syncplayer.message.ActionCode
@@ -44,7 +44,6 @@ import top.tonydon.syncplayer.message.common.MovieMessage
 import top.tonydon.syncplayer.message.common.StringMessage
 import top.tonydon.syncplayer.task.CountTask
 import top.tonydon.syncplayer.util.AlertUtils
-import top.tonydon.syncplayer.util.JSONUtils
 import top.tonydon.syncplayer.util.TimeFormat.getText
 import top.tonydon.syncplayer.util.TimeFormat.setTotal
 import top.tonydon.syncplayer.util.URIUtils
@@ -1008,14 +1007,9 @@ class MainWindow(private val primaryStage: Stage) {
                 }
                 response.body()
             }.thenApply { body: String? ->
-                // 解析 JSON
-                val result = JSONUtils.parse(body, VersionResult::class.java)
-                // 如果 code 不是 200，抛出结果异常
-                if (result.code != 200) {
-                    throw ResultException(result.msg)
-                }
-                // 返回 ProjectVersion
-                result.data
+                val mapper = ObjectMapper()
+                val res = mapper.readTree(body)
+                VersionInfo(res.get("tag_name").asText(), res.get("body").asText())
             }.thenAccept {
                 handleUpdate(it, isAutoCheck)
             }
@@ -1042,45 +1036,42 @@ class MainWindow(private val primaryStage: Stage) {
             }
     }
 
+    // 判断 latest 是否大于 current，若大于返回 true
+    private fun judge(latest: String): Boolean {
+        val currentList = ClientConstants.VERSION.substring(1).split(".")
+        val latestList = latest.substring(1).split(".")
+        println(currentList)
+        println(latestList)
+        for (i in currentList.indices) {
+            return if (latestList[i].toInt() > currentList[i].toInt())
+                true
+            else if (latestList[i].toInt() == currentList[i].toInt()){
+                continue
+            } else
+                false
+        }
+        return false
+    }
+
     // 处理请求结果
-    private fun handleUpdate(version: ProjectVersion, isAutoCheck: Boolean) {
+    private fun handleUpdate(versionInfo: VersionInfo, isAutoCheck: Boolean) {
         // 判断是否有新版本，不接受Beta版本更新
-        if (version.versionNumber <= ClientConstants.VERSION_NUMBER || version.isBeta) {
+        if (!judge(versionInfo.version)) {
             if (!isAutoCheck)
                 AlertUtils.information("当前版本" + ClientConstants.VERSION + "已是最新版本！", "", primaryStage)
             return
         }
 
-        var headerText = "检测到新版本：${version.version}！"
-        val alertType: Alert.AlertType
-        if (version.isForced) {
-            // 强制更新
-            headerText += "新版本为强制更新，否则无法使用，请立即更新！"
-            alertType = Alert.AlertType.INFORMATION
-        } else {
-            // 判断兼容旧版本更新
-            headerText += if (version.isCompatible) "是否前往下载？" else "新版本不兼容旧版本，请尽快更新！"
-            alertType = Alert.AlertType.CONFIRMATION
-        }
         Platform.runLater {
-            val alert = Alert(alertType)
-            alert.headerText = headerText
-            alert.contentText = version.description
+            val alert = Alert(Alert.AlertType.CONFIRMATION)
+            alert.headerText = "检测到新版本：${versionInfo.version}！当前版本可能无法正常使用！点击确定前往下载！"
+            alert.contentText = versionInfo.info
             alert.initModality(Modality.WINDOW_MODAL)
             alert.initOwner(primaryStage)
             val optional = alert.showAndWait()
-            // 如果是强制更新，退出软件
-            if (version.isForced) {
-                if (optional.isPresent)
-                // 点击确定，打开更新网页
-                    hostServices!!.showDocument(ClientConstants.LATEST_URL)
-                // 关闭软件
-                primaryStage.close()
-            } else {
-                optional
-                    .filter { buttonType: ButtonType -> buttonType == ButtonType.OK }
-                    .ifPresent { hostServices!!.showDocument(ClientConstants.LATEST_URL) }
-            }
+            optional
+                .filter { buttonType: ButtonType -> buttonType == ButtonType.OK }
+                .ifPresent { hostServices!!.showDocument(ClientConstants.LATEST_URL) }
         }
     }
 
