@@ -774,7 +774,8 @@ class MainWindow(private val primaryStage: Stage) {
 
             ActionCode.MOVIE_SYNC -> {
                 player.controls().setTime(message.milliseconds)
-                player.controls().setRate(message.rate)
+//                player.controls().setRate(message.rate)
+                rateSpinner.valueFactory.value = message.rate.toDouble()
                 player.controls().play()
                 playImage.image = pauseBlueIcon
                 log.info(

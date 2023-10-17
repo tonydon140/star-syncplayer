@@ -5,8 +5,8 @@ object ClientConstants {
     const val EXAMPLE_URL = "ws://www.example.com:8888/websocket"
 
 //    const val DEFAULT_URL = "ws://localhost:6515/syncplayer"
-    const val DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer"
-//    const val DEFAULT_URL = "wss://tonydon.top:6515/syncplayer"
+//    const val DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer"
+    const val DEFAULT_URL = "wss://tonydon.top:6515/syncplayer"
 
     // 使用 gitee 发行版作为检查更新的地址
     const val CHECK_UPDATE_URL = "https://gitee.com/api/v5/repos/shuilanjiao/star-syncplayer/releases/latest"
