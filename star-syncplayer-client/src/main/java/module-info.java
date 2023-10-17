@@ -5,7 +5,7 @@ module top.tonydon {
 
     requires movie.common;
     requires org.slf4j;
-    requires websocket.client;
+    requires org.java_websocket;
     requires ch.qos.logback.classic;
     requires com.fasterxml.jackson.databind;
     requires com.fasterxml.jackson.datatype.jsr310;

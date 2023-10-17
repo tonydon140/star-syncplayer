@@ -7,7 +7,7 @@
 
     <groupId>top.tonydon.syncplayer</groupId>
     <artifactId>star-syncplayer-client</artifactId>
-    <version>2.1.0</version>
+    <version>2.2.0</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -45,11 +45,11 @@
             <version>1.4.7</version>
         </dependency>
 
-        <!-- 模块化的 Java-WebSocket -->
+        <!-- Java-WebSocket -->
         <dependency>
-            <groupId>top.tonydon.syncplayer</groupId>
-            <artifactId>star-websocket-client</artifactId>
-            <version>1.5.3</version>
+            <groupId>org.java-websocket</groupId>
+            <artifactId>Java-WebSocket</artifactId>
+            <version>1.5.4</version>
         </dependency>
 
         <!-- Star Movie Common -->
@@ -88,7 +88,7 @@
             <plugin>
                 <groupId>io.github.fvarrui</groupId>
                 <artifactId>javapackager</artifactId>
-                <version>1.7.2</version>
+                <version>1.7.5</version>
                 <executions>
                     <execution>
                         <phase>package</phase>

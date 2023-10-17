@@ -6,6 +6,7 @@ object ClientConstants {
 
 //    const val DEFAULT_URL = "ws://localhost:6515/syncplayer"
     const val DEFAULT_URL = "ws://123.57.92.83:6515/syncplayer"
+//    const val DEFAULT_URL = "wss://tonydon.top:6515/syncplayer"
 
     // 使用 gitee 发行版作为检查更新的地址
     const val CHECK_UPDATE_URL = "https://gitee.com/api/v5/repos/shuilanjiao/star-syncplayer/releases/latest"
@@ -14,7 +15,7 @@ object ClientConstants {
     const val VLC_DOWNLOAD_URL = "https://www.videolan.org/vlc/index.zh_CN.html"
     const val ABOUT_URL = "https://shuilanjiao.gitee.io/p/2023/10/star-syncplayer/"
     const val URL_REG = "^(wss|ws)://[\\S]+"
-    const val VERSION = "v2.1.0"
+    const val VERSION = "v2.2.0"
 
     const val TITLE = "星星电影院 $VERSION"
 
