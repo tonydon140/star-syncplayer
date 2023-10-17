@@ -39,7 +39,7 @@
 
 ### 自定义服务器
 
-目前该项目的默认服务器提供服务到2024年1月24日。
+目前该项目的默认服务器提供服务到2024年9月1日。
 
 想自搭服务器的朋友可以参考`star-syncplayer-server`模块进行搭建。
 
@@ -80,7 +80,6 @@ S -.T2.->B(小红)
 | star-syncplayer-client | 使用 JavaFX 开发的客户端。                                   |
 | star-syncplayer-common | client 和 server 之间使用的消息实体类                        |
 | star-syncplayer-server | 基于 SpringBoot 的 WebSocket 服务端示例。<br>想自建服务器的朋友可以参考这个模块进行实现。 |
-| star-websocket-client  | 模块化的 WebSocket 的客户端实现。基于 [Java-Websocket](https://github.com/TooTallNate/Java-WebSocket) |
 
 
 
