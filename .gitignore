@@ -2,7 +2,7 @@
 logs
 */target
 *.iml
+*/.gradle
+*/*.iml
 
-star-syncplayer-client/src/test
-star-syncplayer-common/src/test
-star-syncplayer-server/src/test
+*/src/test

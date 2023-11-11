@@ -7,11 +7,11 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.1.4</version>
+        <version>3.1.5</version>
     </parent>
 
     <groupId>top.tonydon.syncplayer</groupId>
-    <artifactId>star-syncplayer-server</artifactId>
+    <artifactId>server</artifactId>
     <version>2.2.0</version>
 
     <properties>
@@ -22,8 +22,8 @@
     <dependencies>
         <dependency>
             <groupId>top.tonydon.syncplayer</groupId>
-            <artifactId>star-syncplayer-common</artifactId>
-            <version>2.1.0</version>
+            <artifactId>common</artifactId>
+            <version>2.2.0</version>
         </dependency>
 
         <dependency>

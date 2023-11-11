@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>top.tonydon.syncplayer</groupId>
-    <artifactId>star-syncplayer-client</artifactId>
+    <artifactId>client</artifactId>
     <version>2.2.0</version>
 
     <properties>
@@ -55,7 +55,7 @@
         <!-- Star Movie Common -->
         <dependency>
             <groupId>top.tonydon.syncplayer</groupId>
-            <artifactId>star-syncplayer-common</artifactId>
+            <artifactId>common</artifactId>
             <version>2.2.0</version>
         </dependency>
 
@@ -81,14 +81,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+<!--                <version>3.11.0</version>-->
             </plugin>
 
             <!-- JavaFX 打包插件 -->
             <plugin>
                 <groupId>io.github.fvarrui</groupId>
                 <artifactId>javapackager</artifactId>
-                <version>1.7.2</version>
+                <version>1.7.5</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -100,10 +100,11 @@
                             <mainClass>top.tonydon.syncplayer.MainApplicationKt</mainClass>
                             <!-- 内置JRE -->
                             <bundleJre>true</bundleJre>
-                            <!-- 不生成安装器 -->
-                            <generateInstaller>false</generateInstaller>
+<!--                             不生成安装器 -->
+<!--                            <generateInstaller>false</generateInstaller>-->
                             <!-- Window 平台 -->
                             <platform>windows</platform>
+
                             <!-- 组织名称 -->
                             <organizationName>TonyDon</organizationName>
                             <winConfig>
