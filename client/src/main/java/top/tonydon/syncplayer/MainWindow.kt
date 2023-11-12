@@ -51,9 +51,7 @@ import top.tonydon.syncplayer.util.observer.ClientObserver
 import top.tonydon.syncplayer.util.observer.CountObserver
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface
-import uk.co.caprica.vlcj.media.Media
-import uk.co.caprica.vlcj.media.MediaEventAdapter
-import uk.co.caprica.vlcj.media.Meta
+import uk.co.caprica.vlcj.media.*
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
@@ -265,6 +263,8 @@ class MainWindow(private val primaryStage: Stage) {
             isMouseBottom = event.screenY > screenHeight - 80
             controlBox.isVisible = isMouseBottom
         }
+
+        // 播放器监听事件
         player.events().addMediaPlayerEventListener(object : MediaPlayerEventAdapter() {
             override fun timeChanged(mediaPlayer: MediaPlayer, newTime: Long) {
                 if (!mouse) {
@@ -280,27 +280,32 @@ class MainWindow(private val primaryStage: Stage) {
                     }
                 }
             }
-        })
-        player.events().addMediaEventListener(object : MediaEventAdapter() {
-            override fun mediaMetaChanged(media: Media, metaType: Meta) {
-                // 1. 按钮解禁
+
+            // 切换媒体时初始化设置
+            override fun mediaChanged(mediaPlayer: MediaPlayer?, media: MediaRef?) {
+                // 解禁播放按钮
                 flushUI(UIState.OPEN_VIDEO)
-
-                // 设置时长进度条
-                val total = media.info().duration()
-                videoSlider.max = total.toDouble()
-                videoSlider.isVisible = true
-                setTotal(total)
-                Platform.runLater { timeLabel.text = getText(0) }
-
+                // 设置点击事件
+                videoImageView.setOnMouseClicked { playOrPause(null) }
                 // 设置初始音量
                 player.audio().setVolume(VideoConstants.DEFAULT_VOLUME)
-
                 // 设置初始倍速
                 player.controls().setRate(VideoConstants.DEFAULT_RATE)
+            }
+        })
 
-                // 3. 设置视频点击播放/暂停
-                videoImageView.setOnMouseClicked { playOrPause(null) }
+        player.events().addMediaEventListener(object : MediaEventAdapter() {
+            // 加载媒体时设置进度条时间
+            override fun mediaMetaChanged(media: Media, metaType: Meta) {
+                val duration = media.info().duration()
+                if (duration != -1L){
+                    log.info("media meta changed, duration = {}", duration)
+                    // 设置时长进度条
+                    videoSlider.max = duration.toDouble()
+                    videoSlider.isVisible = true
+                    setTotal(duration)
+                    Platform.runLater { timeLabel.text = getText(0) }
+                }
             }
         })
     }
@@ -911,7 +916,8 @@ class MainWindow(private val primaryStage: Stage) {
         fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("视频文件", VideoConstants.VIDEO_FILTER))
 
         // 打开文件选择器，返回选择的文件
-        val path = fileChooser.showOpenDialog(primaryStage).path ?: return
+        val file = fileChooser.showOpenDialog(primaryStage) ?: return
+        val path = file.path
 
         // 设置标题
         Platform.runLater {
@@ -919,13 +925,17 @@ class MainWindow(private val primaryStage: Stage) {
             primaryStage.title = ClientConstants.TITLE + " - " + tmp[tmp.size - 1]
         }
 
+        if (isPlaying) pause()
+
         // 加载视频
         loadVideo(path)
     }
 
     private fun loadVideo(uri: String) {
         log.info("load video : {}", uri)
+        // 准备新媒体
         player.media().prepare(uri)
+        // 异步解析视频
         player.media().parsing().parse()
     }
 

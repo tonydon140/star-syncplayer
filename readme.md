@@ -75,11 +75,11 @@ S -.T2.->B(小红)
 
 ### 项目模块介绍
 
-| 模块                   | 描述                                                         |
-| ---------------------- | ------------------------------------------------------------ |
-| star-syncplayer-client | 使用 JavaFX 开发的客户端。                                   |
-| star-syncplayer-common | client 和 server 之间使用的消息实体类                        |
-| star-syncplayer-server | 基于 SpringBoot 的 WebSocket 服务端示例。<br>想自建服务器的朋友可以参考这个模块进行实现。 |
+| 模块   | 描述                                                         |
+| ------ | ------------------------------------------------------------ |
+| client | 使用 JavaFX 开发的客户端。                                   |
+| common | client 和 server 之间使用的消息实体类                        |
+| server | 基于 SpringBoot 的 WebSocket 服务端示例。<br>想自建服务器的朋友可以参考这个模块进行实现。 |
 
 
 
