@@ -12,8 +12,6 @@ module top.tonydon {
     requires kotlin.stdlib;
     requires uk.co.caprica.vlcj;
     requires com.sun.jna.platform;
-//    requires uk.co.caprica.vlcj.javafx;
-//    requires com.sun.jna.platform;
 
     opens top.tonydon.syncplayer to javafx.graphics;
 

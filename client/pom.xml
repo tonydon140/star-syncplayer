@@ -12,7 +12,7 @@
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
-        <kotlin.version>1.8.10</kotlin.version>
+        <kotlin.version>1.9.10</kotlin.version>
         <!-- EXE 的名称 -->
         <name>StarSyncplayer</name>
     </properties>
@@ -59,12 +59,7 @@
             <version>2.2.0</version>
         </dependency>
 
-<!--        &lt;!&ndash; vlcj &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>uk.co.caprica</groupId>-->
-<!--            <artifactId>vlcj-javafx</artifactId>-->
-<!--            <version>1.2.0</version>-->
-<!--        </dependency>-->
+        <!-- vlcj -->
         <dependency>
             <groupId>uk.co.caprica</groupId>
             <artifactId>vlcj</artifactId>
@@ -86,7 +81,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-<!--                <version>3.11.0</version>-->
+                <version>3.11.0</version>
             </plugin>
 
             <!-- JavaFX 打包插件 -->
