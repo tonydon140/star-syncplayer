@@ -911,17 +911,20 @@ class MainWindow(private val primaryStage: Stage) {
         fileChooser.extensionFilters.add(FileChooser.ExtensionFilter("视频文件", VideoConstants.VIDEO_FILTER))
 
         // 打开文件选择器，返回选择的文件
-        val file = fileChooser.showOpenDialog(primaryStage) ?: return
+        val path = fileChooser.showOpenDialog(primaryStage).path ?: return
 
-        // 将文件转为 uri 路径，加载媒体视频
-        val uri = URIUtils.encoder(file.toPath().toUri().path)
-        log.info(uri)
+        // 设置标题
+        Platform.runLater {
+            val tmp = path.split("\\")
+            primaryStage.title = ClientConstants.TITLE + " - " + tmp[tmp.size - 1]
+        }
 
         // 加载视频
-        loadVideo(uri)
+        loadVideo(path)
     }
 
     private fun loadVideo(uri: String) {
+        log.info("load video : {}", uri)
         player.media().prepare(uri)
         player.media().parsing().parse()
     }
@@ -1044,7 +1047,7 @@ class MainWindow(private val primaryStage: Stage) {
         for (i in currentList.indices) {
             return if (latestList[i].toInt() > currentList[i].toInt())
                 true
-            else if (latestList[i].toInt() == currentList[i].toInt()){
+            else if (latestList[i].toInt() == currentList[i].toInt()) {
                 continue
             } else
                 false
