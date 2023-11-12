@@ -17,7 +17,7 @@
  * Copyright 2009-2020 Caprica Software Limited.
  */
 
-package top.tonydon.syncplayer.vlcj.videosurface;
+package top.tonydon.syncplayer.vlcj;
 
 import javafx.application.Platform;
 import javafx.scene.image.ImageView;

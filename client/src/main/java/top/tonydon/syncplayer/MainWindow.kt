@@ -48,7 +48,7 @@ import top.tonydon.syncplayer.util.TimeFormat.getText
 import top.tonydon.syncplayer.util.TimeFormat.setTotal
 import top.tonydon.syncplayer.util.observer.ClientObserver
 import top.tonydon.syncplayer.util.observer.CountObserver
-import top.tonydon.syncplayer.vlcj.videosurface.ImageViewVideoSurface
+import top.tonydon.syncplayer.vlcj.ImageViewVideoSurface
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
 import uk.co.caprica.vlcj.media.Media
 import uk.co.caprica.vlcj.media.MediaEventAdapter
@@ -362,7 +362,11 @@ class MainWindow(private val primaryStage: Stage) {
         videoPane.background = Background.fill(Color.rgb(16, 16, 16))
         videoPane.alignment = Pos.CENTER
         videoImageView.isPreserveRatio = true
-        player.videoSurface().set(ImageViewVideoSurface(videoImageView))
+        player.videoSurface().set(
+            ImageViewVideoSurface(
+                videoImageView
+            )
+        )
         videoPane.children.add(videoImageView)
         root.children.add(videoPane)
     }

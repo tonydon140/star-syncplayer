@@ -1,9 +1,9 @@
-module top.tonydon {
+module syncplayer.client {
     requires javafx.controls;
     requires javafx.graphics;
     requires java.net.http;
 
-    requires movie.common;
+    requires syncplayer.common;
     requires org.slf4j;
     requires org.java_websocket;
     requires ch.qos.logback.classic;

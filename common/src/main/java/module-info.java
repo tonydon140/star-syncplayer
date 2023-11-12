@@ -1,4 +1,4 @@
-module movie.common {
+module syncplayer.common {
     requires com.fasterxml.jackson.databind;
 
     exports top.tonydon.syncplayer.message;
