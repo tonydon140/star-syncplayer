@@ -46,12 +46,14 @@ import top.tonydon.syncplayer.task.CountTask
 import top.tonydon.syncplayer.util.AlertUtils
 import top.tonydon.syncplayer.util.TimeFormat.getText
 import top.tonydon.syncplayer.util.TimeFormat.setTotal
-import top.tonydon.syncplayer.util.URIUtils
 import top.tonydon.syncplayer.util.observer.ClientObserver
 import top.tonydon.syncplayer.util.observer.CountObserver
+import top.tonydon.syncplayer.vlcj.videosurface.ImageViewVideoSurface
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
-import uk.co.caprica.vlcj.javafx.videosurface.ImageViewVideoSurface
-import uk.co.caprica.vlcj.media.*
+import uk.co.caprica.vlcj.media.Media
+import uk.co.caprica.vlcj.media.MediaEventAdapter
+import uk.co.caprica.vlcj.media.MediaRef
+import uk.co.caprica.vlcj.media.Meta
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
