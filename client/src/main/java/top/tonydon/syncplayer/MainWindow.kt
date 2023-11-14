@@ -46,6 +46,7 @@ import top.tonydon.syncplayer.task.CountTask
 import top.tonydon.syncplayer.util.AlertUtils
 import top.tonydon.syncplayer.util.TimeFormat.getText
 import top.tonydon.syncplayer.util.TimeFormat.setTotal
+import top.tonydon.syncplayer.util.WindowUtils
 import top.tonydon.syncplayer.util.observer.ClientObserver
 import top.tonydon.syncplayer.util.observer.CountObserver
 import top.tonydon.syncplayer.vlcj.ImageViewVideoSurface
@@ -1057,24 +1058,24 @@ class MainWindow(private val primaryStage: Stage) {
     }
 
     // 判断 latest 是否大于 current，若大于返回 true
-    private fun judge(latest: String): Boolean {
-        val currentList = ClientConstants.VERSION.substring(1).split(".")
-        val latestList = latest.substring(1).split(".")
-        for (i in currentList.indices) {
-            return if (latestList[i].toInt() > currentList[i].toInt())
-                true
-            else if (latestList[i].toInt() == currentList[i].toInt()) {
-                continue
-            } else
-                false
-        }
-        return false
-    }
+//    private fun judge(latest: String): Boolean {
+//        val currentList = ClientConstants.VERSION.substring(1).split(".")
+//        val latestList = latest.substring(1).split(".")
+//        for (i in currentList.indices) {
+//            return if (latestList[i].toInt() > currentList[i].toInt())
+//                true
+//            else if (latestList[i].toInt() == currentList[i].toInt()) {
+//                continue
+//            } else
+//                false
+//        }
+//        return false
+//    }
 
     // 处理请求结果
     private fun handleUpdate(versionInfo: VersionInfo, isAutoCheck: Boolean) {
         // 判断是否有新版本，不接受Beta版本更新
-        if (!judge(versionInfo.version)) {
+        if (!WindowUtils.judgeVersion(versionInfo.version)) {
             if (!isAutoCheck)
                 AlertUtils.information("当前版本" + ClientConstants.VERSION + "已是最新版本！", "", primaryStage)
             return

@@ -25,7 +25,33 @@ class MainApplication : Application() {
         stage.height = ClientConstants.CLIENT_DEFAULT_HEIGHT
     }
 
+    private fun loadConfig() {
+        val inputStream = javaClass.getResourceAsStream("config.properties")
+        val config = Properties()
+        config.load(inputStream)
+
+        ClientConstants.DEFAULT_URL = config["url.server"] as String
+        ClientConstants.EXAMPLE_URL = config["url.example"] as String
+        ClientConstants.ABOUT_URL = config["url.about"] as String
+        ClientConstants.LATEST_URL = config["url.latest"] as String
+        ClientConstants.CHECK_UPDATE_URL = config["url.update"] as String
+        ClientConstants.VLC_DOWNLOAD_URL = config["url.vlc"] as String
+        ClientConstants.URL_REG = config["url.reg"] as String
+
+        ClientConstants.ID_LENGTH = config["id.length"].toString().toInt()
+        ClientConstants.VERSION = config["version"] as String
+
+        ClientConstants.CLIENT_MIN_WIDTH = config["width.min"].toString().toDouble()
+        ClientConstants.CLIENT_DEFAULT_WIDTH = config["width.default"].toString().toDouble()
+        ClientConstants.CLIENT_MIN_HEIGHT = config["height.min"].toString().toDouble()
+        ClientConstants.CLIENT_DEFAULT_HEIGHT = config["height.default"].toString().toDouble()
+        ClientConstants.MOUSE_MOVE_INTERVAL = config["mouse.interval"].toString().toInt()
+        inputStream?.close()
+    }
+
     override fun start(primaryStage: Stage) {
+        // 加载配置文件
+        loadConfig();
         // 监测是否存在VLC播放器，如果没有则提示下载
         if (!checkVlc()) {
             hintDownloadVLC()
